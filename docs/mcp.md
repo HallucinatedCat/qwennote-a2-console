@@ -55,7 +55,7 @@ Notes on arguments, as observed:
 
 `update_minutes_title`, `update_minutes_summary`, `replace_minutes_text`, `replace_speaker`, `add_personal_hot_word`, `delete_personal_hotword`.
 
-Writes need a separate grant. In the reader that means `tools --login --write` with its own `--state-dir`; in the console it is a separate consent from Settings. The read-only grant stays narrow. The console's write path is built but still waits for a check against a real account (see [capabilities.md](capabilities.md)).
+Writes need a separate grant. In the reader that means `tools --login --write` with its own `--state-dir`; in the console it is a separate consent from Settings. The read-only grant stays narrow. The console's write path is confirmed against a real account (see [capabilities.md](capabilities.md)).
 
 ## How this project uses it
 

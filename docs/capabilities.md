@@ -16,7 +16,7 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 | --- | --- | --- |
 | Start, pause, resume, stop | ✅ | Each command is followed by a device check |
 | Real recorder state | ✅ | Read from the device and its cloud task, not from the last command; picks up recordings started with the A2's button and a switch-off |
-| Live transcript while recording | 🔎 | Uses a realtime transcription session, the same route the app uses for a 4G A2 |
+| Live transcript while recording | ✅ | Uses a realtime transcription session, the same route the app uses for a 4G A2 |
 | Realtime session | ✅ | Join, keep and leave, receive audio (counted, never saved or played) |
 | Passive diagnostics | ✅ | Bounded private capture of device pushes; reports counts only |
 
@@ -28,7 +28,9 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 | Rename and restore name | ✅ | Restore journal kept privately |
 | Recording, transcription, summary and alert settings | ✅ | Read, change and restore; changes are allowed while recording |
 | Voice button mode | 🔎 | Written as a cloud setting the way the app writes it |
-| Smart slicing, voiceprint on/off, voiceprint clear | 🔎 | Clearing is a dangerous action |
+| Product details and linked phones | ✅ | Read-only; taking the A2 over from a phone is not offered |
+| Smart slicing, voiceprint on/off | 🔎 | |
+| Voiceprint clear | ✅ | Dangerous action: hidden behind a switch and a typed word |
 | Membership, quotas, 4G data usage | ✅ | Fields the vendor does not report are shown as unknown |
 | Native session renewal | ✅ | Proactive and on natural expiry |
 | Credential health | ✅ | Dev tools; never shows a value |
@@ -37,17 +39,19 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 
 | Function | Status | Notes |
 | --- | --- | --- |
-| List, search, browse | ✅ | Via MCP and the application path |
-| Saved transcript with speakers and times | 🔎 | Very long notes still need a check |
+| List and browse | ✅ | Via MCP and the application path |
+| Search, Favorites and tag filters | 🔎 | |
+| Saved transcript with speakers and times | ✅ | Including the end of long notes |
 | Summary: read, edit (default Markdown), regenerate | ✅ | Other templates and rich summaries are out of scope |
 | Find and replace in the transcript | ✅ | Preview first; original kept in a private journal |
 | Tags: create, rename, auto-match, delete, assign | ✅ | |
 | Favorite and remove | ✅ | |
 | Translate (title, summary, key points, action items, transcript) | ✅ | Never changes the original or the saved language |
 | Export: TXT, Markdown, DOCX, PDF, SRT; original, translated, bilingual | ✅ | |
-| Sharing: private/public, password, link | 🔎 | The new share password needs a check |
-| Title, speaker names, hot words (MCP write grant) | 🔎 | Needs the separate `qwennote:write` consent |
-| Delete a note | 🔎 | Dangerous action: hidden behind a switch and a typed word |
+| Sharing: private/public, password, link | ✅ | |
+| Title, summary, find and replace, speaker names, hot words (MCP write grant) | ✅ | Needs the separate `qwennote:write` consent |
+| Rename a speaker (application path) | 🔎 | |
+| Delete a note | ✅ | Dangerous action: hidden behind a switch and a typed word |
 | Keywords, to-dos, details | ✅ | MCP reads |
 
 ## Recordings and memos
@@ -55,8 +59,8 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 | Function | Status | Notes |
 | --- | --- | --- |
 | Cloud recordings: list, save original audio, make a note | 🔎 | The A2 records in incognito mode, so original audio is saved from Recordings |
-| Recycle bin and restore, groups, markers, move | 🔎 | |
-| Delete a recording | 🔎 | Dangerous action |
+| Delete a recording to the recycle bin, restore it | ✅ | Dangerous action |
+| Groups, markers, move | 🔎 | |
 | Voice memos: read, edit, delete, add to an assistant draft | 🔎 | |
 
 ## Assistant
@@ -71,7 +75,7 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 | Function | Status | Notes |
 | --- | --- | --- |
 | OAuth login, refresh, all 14 read tools | ✅ | See [mcp.md](mcp.md) |
-| 6 write tools on a separate grant | 🔎 | |
+| 6 write tools on a separate grant | ✅ | |
 
 ## Not supported
 
