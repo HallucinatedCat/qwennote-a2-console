@@ -16,6 +16,19 @@ An unofficial, self-hosted backend and web console for the **QwenNote A2** voice
 
 What it does **not** do: firmware updates, device reset, voice/speaker playback on the device, or anything that needs a device you do not own.
 
+Every function, with what is proven on real hardware and what still needs a check: **[docs/capabilities.md](docs/capabilities.md)**.
+
+## Official MCP endpoints
+
+The document features use QwenNote's official MCP server. Full reference, tools and related documents: **[docs/mcp.md](docs/mcp.md)**.
+
+| | |
+| --- | --- |
+| MCP server | `https://minutes.qwennote.cn/mcp` (streamable HTTP) |
+| OAuth issuer | `https://minutes.qwennote.cn` ([metadata](https://minutes.qwennote.cn/.well-known/oauth-authorization-server)) |
+| Scopes | `qwennote:read`, `qwennote:write` (opt-in) |
+| Flow | Authorization code + PKCE S256, dynamic client registration, refresh token |
+
 ## Live demo
 
 **[qwennote-a2-console-demo.pages.dev](https://qwennote-a2-console-demo.pages.dev/)** runs the real web UI in your browser with invented data. There is no backend: the API is answered in the page by the same simulation as `tools/ui_preview.py` (via Pyodide). It is read-only, so anything that would change a recorder, note or setting is refused. Use the switcher at the bottom to try the `empty`, `recording`, `attention` and `worst` scenarios. Build it yourself with `python3 tools/build_demo.py`.
@@ -32,6 +45,8 @@ What it does **not** do: firmware updates, device reset, voice/speaker playback 
 | [`tools/a2-ble/`](tools/a2-ble/README.md) | Experimental, paused Bluetooth client for Windows |
 | [`docs/credentials.md`](docs/credentials.md) | Which credentials the backend needs and how to import them |
 | [`docs/host-api.md`](docs/host-api.md) | The backend's own HTTP API: every route, its guards, cache and recovery rules |
+| [`docs/capabilities.md`](docs/capabilities.md) | Every function and its status (working, needs a check, not supported) |
+| [`docs/mcp.md`](docs/mcp.md) | Official MCP endpoints, OAuth flow, tools and related documents |
 
 ## Quick start
 
