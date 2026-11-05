@@ -144,6 +144,7 @@ class Backend:
         armed=self.armed_path.exists() and json.loads(self.armed_path.read_text()).get('armed') is True
         self.ready_until=ARMED_UNTIL if armed else 0;self.record_phase='unconfirmed'
         self.record_state={'phase':'idle','action':None,'at':None}
+        self.last_fid=None  # fid of the recording the A2 last reported, for Save audio after Stop
         self.test_path=state/'disposable-test.json'
         if self.test_path.is_symlink():raise ValueError('Disposable-test record must not be a link')
         self.own_test=self.test_path.exists() and json.loads(self.test_path.read_text()).get('open') is True
@@ -845,6 +846,7 @@ class Backend:
             record=selected_device(self.config,response)
             self.device_record=record;self.device=public_device(record)
             online=record.get('onlineStatus')==1;fid=recording_fid(record);task=None
+            if fid is not None:self.last_fid=fid
             if online and fid is not None:
                 try:
                     reply=await self.channel._request(task_protocol.QUERY_URI,task_protocol.query(self.config,fid),REFERER)
@@ -1028,11 +1030,12 @@ class Backend:
             while len(self.recording_pages)>64:self.recording_pages.pop(next(iter(self.recording_pages)))
         return {'recordings':public,'has_more':bool(more and cursor),'next_token':token}
 
-    async def recording_audio(self,handle,file_format='ogg'):
+    async def recording_audio(self,handle,file_format='wav',wait=False):
         """Save one recording's original audio in protected storage and send it to the browser.
-        The download does not depend on incognito (queryFileDownloadInfo has no such check)."""
+        The download does not depend on incognito (queryFileDownloadInfo has no such check).
+        wait turns a still-preparing cloud file into None instead of Unavailable, for polling."""
         fid=self.recording_file(handle)
-        if file_format not in device_files.FORMATS:raise Refused('Choose ogg, mp3 or wav')
+        if file_format not in device_files.FORMATS:raise Refused('Only WAV audio is available')
         if not self.channel or not self.channel.ready:raise Unavailable('The native connection is not ready')
         async with self.queued(self.media_lock):
             # Stage names and error types only, so a failed save shows where it stopped.
@@ -1043,6 +1046,7 @@ class Backend:
                 saved['phase']='parse';ready=device_files.parse_download(reply)
                 if ready is None:
                     private_write(journal,{**saved,'phase':'not-ready'})
+                    if wait:return None
                     raise Unavailable('The cloud is still preparing this recording; try again in a minute')
                 returned=reply['body']['fileDownloadInfoDTO'].get('headers')
                 saved.update(phase='download',headers_returned=len(returned) if isinstance(returned,dict) else 0,headers_kept=len(ready[1]))
@@ -1050,7 +1054,7 @@ class Backend:
             except Unavailable:raise
             except device_files.NoAudio:
                 private_write(journal,{**saved,'phase':'no-audio'})
-                raise Unavailable('The cloud keeps no audio file for this recording; incognito recordings lose their audio after transcription') from None
+                raise CloudRejected('The cloud keeps no audio file for this recording; incognito recordings lose their audio when transcription finishes, so save it right after the recording stops') from None
             except asyncio.CancelledError:
                 private_write(journal,{**saved,'cancelled':True});raise
             except Exception as error:
@@ -1061,6 +1065,16 @@ class Backend:
             private_write(journal,{**saved,'phase':'complete'})
         name='recording-'+handle[:8]+result['path'].suffix
         return web.FileResponse(result['path'],headers={'Content-Disposition':f'attachment; filename="{name}"','Cache-Control':'no-store'})
+
+    async def latest_recording_audio(self):
+        """Save audio for the recording the A2 last reported (Recorder → Download original audio).
+        A read only, so the page may call it repeatedly; {'ready': False} until the cloud lists the file and has it ready."""
+        if self.last_fid is None:raise Refused('No recording was seen while recording; save it from Recordings')
+        listed=await self.recordings()
+        handle=next((row['handle'] for row in listed['recordings'] if str(self.handles.get(('fid',row['handle'])))==str(self.last_fid)),None)
+        if handle is None:return {'ready':False}
+        response=await self.recording_audio(handle,'wav',wait=True)
+        return {'ready':False} if response is None else response
 
     async def recording_write(self,uri,body,journal_name,dangerous=False):
         """One recording write (make a note, delete, restore): journaled first, never retried."""
@@ -2203,7 +2217,8 @@ def make_app(backend,frontend=None):
         elif action=='device-check':result=await b.check_device()
         elif action=='note-mcp-write':result=await b.mcp_write(data.get('tool'),data.get('arguments'))
         elif action=='recordings':result=await b.recordings(data.get('next_token'),data.get('source','this'))
-        elif action=='recording-audio':result=await b.recording_audio(data.get('handle'),data.get('format','ogg'))
+        elif action=='recording-audio':result=await b.recording_audio(data.get('handle'),data.get('format','wav'))
+        elif action=='recording-audio-latest':result=await b.latest_recording_audio()
         elif action=='recording-make-note':
             result=await b.recording_write(device_files.GENERATE_URI,device_files.generate_request(b.config,[b.recording_file(data.get('handle'))]),'make-note')
         elif action=='recording-recover':
@@ -2250,10 +2265,12 @@ def make_app(backend,frontend=None):
             result=await b.account_setting_write('voiceprint-clear',account_settings.VOICEPRINT_CLEAR_URI,[{}],dangerous=True)
         elif action=='note-delete':result=await b.delete_note(data.get('task_uuid'),data.get('confirm'))
         elif action=='device-unbind':result=await b.unbind_device(data.get('confirm'))
-        elif action=='rtc-start':result=await b.rtc.start(data.get('seconds',20),data.get('receive_audio',False))
+        elif action=='rtc-start':b.last_fid=None;result=await b.rtc.start(data.get('seconds',20),data.get('receive_audio',False))
         elif action=='rtc-stop':result=b.rtc.request_stop()
         elif action=='rtc-options':result=await b.interpreter_options(data.get('scene','a1_transcribe'))
-        elif action=='record':result=await b.record(data.get('action'))
+        elif action=='record':
+            if data.get('action')=='start':b.last_fid=None
+            result=await b.record(data.get('action'))
         elif action=='record-task':
             if data:raise Refused('Task refresh takes no identifiers or options')
             result=await b.refresh_record_task()

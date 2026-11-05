@@ -1121,13 +1121,27 @@ Save one recording's original audio in protected storage and download it.
 | Field | Type and constraint | Presence |
 | --- | --- | --- |
 | `handle` | string: handle from recordings | Required |
-| `format` | string: ogg (default), mp3 or wav | Optional |
+| `format` | string: wav only (default; the A2 uploads WAV) | Optional |
 
 **Response:** Attachment, not JSON: the audio file.
 
-**Side effects:** DeviceFileI.queryFileDownloadInfo, then a bounded, origin-checked download with the cloud-supplied headers into .private/media (0600), checked with ffprobe. Works for incognito recordings too.
+**Side effects:** DeviceFileI.queryFileDownloadInfo, then a bounded, origin-checked download with the cloud-supplied headers into .private/media (0600), checked with ffprobe. Works for incognito recordings only until transcription finishes, when the cloud deletes their audio.
 
-**Common public error codes:** `refused`, `busy`, `unavailable`.
+**Common public error codes:** `refused`, `busy`, `unavailable`, `cloud_rejected`.
+
+### `recording-audio-latest`
+
+Save the WAV of the recording the A2 last reported, for Recorder → Download original audio after Stop.
+
+`POST /api/recording-audio-latest`
+
+Send an empty JSON object: `{}`.
+
+**Response:** Attachment, not JSON: the WAV file; or JSON {ready: false} while the cloud does not list or have the file yet.
+
+**Side effects:** One DeviceFileI.queryFileList read and, once the recording with the fid from the last device check is listed, the same queryFileDownloadInfo and bounded download as recording-audio. A read only, so the page repeats it.
+
+**Common public error codes:** `refused`, `busy`, `unavailable`, `cloud_rejected`.
 
 ### `recording-make-note`
 

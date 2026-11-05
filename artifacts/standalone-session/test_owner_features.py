@@ -169,3 +169,15 @@ class NativeExtrasTests(unittest.IsolatedAsyncioTestCase):
             handle=b.handle('memo','private-memo')
             with self.assertRaises(Refused):await b.native_write('memo-delete',extras.MEMO_DELETE_URI,extras.memo_delete(b.resolve('memo',handle)),dangerous=True)
             with self.assertRaises(Refused):b.resolve('memo','unknown-handle')
+
+
+class LatestAudioTests(unittest.IsolatedAsyncioTestCase):
+    async def test_download_after_stop_finds_the_stopped_recording_by_fid(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b=ready_backend(Path(tmp))
+            with self.assertRaises(Refused):await b.latest_recording_audio()
+            b.last_fid=42;b.recordings=AsyncMock(return_value={'recordings':[{'handle':'h1'},{'handle':'h2'}]});b.handles[('fid','h1')]=41
+            self.assertEqual(await b.latest_recording_audio(),{'ready':False})
+            b.handles[('fid','h2')]=42;b.recording_audio=AsyncMock(return_value=None)
+            self.assertEqual(await b.latest_recording_audio(),{'ready':False})
+            b.recording_audio.assert_awaited_once_with('h2','wav',wait=True)

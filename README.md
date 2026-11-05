@@ -23,9 +23,9 @@
 
 | Area | What it does |
 | --- | --- |
-| 🎙️ **Recorder** | Start, pause and stop the A2; see its real state, read back from the device instead of the last command sent; live transcript while you record |
+| 🎙️ **Recorder** | Start, pause and stop the A2; see its real state, read back from the device instead of the last command sent; live transcript while you record; optionally download the original WAV automatically after Stop |
 | 📝 **Notes** | Summaries and transcripts with speakers and times; edit and regenerate summaries; find and replace; tags, favorites and sharing; translation; export as TXT, Markdown, DOCX, PDF or SRT |
-| 🗂️ **Recordings and memos** | Cloud recordings, recycle bin, groups and markers; voice memos |
+| 🗂️ **Recordings and memos** | Save any recording's original audio (WAV), recycle bin, groups and markers; voice memos |
 | 🤖 **Assistant** | Ask about a note or anything else, with the built-in assistant or your own OpenAI-compatible provider |
 | ⚙️ **Settings** | Recording, transcription, summary and alert settings, device name, quotas and 4G usage, each with a restore journal |
 | 📄 **Official MCP** | QwenNote's OAuth/MCP document service: 14 read tools, plus 6 write tools on a separate opt-in grant |

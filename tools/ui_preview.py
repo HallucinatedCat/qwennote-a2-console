@@ -415,6 +415,9 @@ class Preview:
         if row is None:raise Refusal('Load the recordings list again before using this recording')
         return row
 
+    def do_recording_audio_latest(self,data):
+        return b'RIFF synthetic preview audio'
+
     def do_recording_audio(self,data):
         self.recording(data);return b'OggS synthetic preview audio'
 

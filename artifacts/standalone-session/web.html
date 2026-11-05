@@ -392,6 +392,7 @@ dialog[open]{animation:pop .18s var(--ease-out)}
                   <p id="record-timer" class="timer" hidden></p>
                   <div class="row device-check"><span id="device-check-text" class="small muted grow"></span><button id="device-check" class="btn ghost small" type="button" data-i18n="device.check"></button></div>
                   <label id="record-live-row" class="switch" hidden><input id="record-live" type="checkbox" role="switch"><span data-i18n="recording.live"></span></label>
+                  <label id="record-save-row" class="switch"><input id="record-save-audio" type="checkbox" role="switch"><span data-i18n="recording.saveAudio"></span></label>
                   <div id="dock-slot-home" class="dock-slot large"></div>
                   <p class="small muted" data-i18n="home.recorderHelp"></p>
                 </section>
@@ -519,7 +520,7 @@ dialog[open]{animation:pop .18s var(--ease-out)}
             <div class="page-head"><div><h2 data-i18n="memos.heading"></h2><p class="muted" data-i18n="memos.intro"></p></div></div>
             <section class="card" aria-labelledby="recordings-title" style="margin-bottom:16px">
               <div class="card-head"><div><h2 id="recordings-title" data-i18n="recordings.title"></h2><p class="small muted" data-i18n="recordings.help"></p></div>
-                <div class="row"><select id="recordings-source" style="width:auto" data-i18n-attr="aria-label=recordings.source"><option value="this" data-i18n="recordings.sourceThis"></option><option value="other" data-i18n="recordings.sourceOther"></option></select><button id="recordings-groups" class="btn small" type="button" data-i18n="groups.title"></button><select id="recordings-format" style="width:auto" data-i18n-attr="aria-label=recordings.format"><option value="ogg">OGG</option><option value="mp3">MP3</option><option value="wav">WAV</option></select><button id="recordings-load" class="btn small" type="button" data-i18n="action.load"></button></div></div>
+                <div class="row"><select id="recordings-source" style="width:auto" data-i18n-attr="aria-label=recordings.source"><option value="this" data-i18n="recordings.sourceThis"></option><option value="other" data-i18n="recordings.sourceOther"></option></select><button id="recordings-groups" class="btn small" type="button" data-i18n="groups.title"></button><button id="recordings-load" class="btn small" type="button" data-i18n="action.load"></button></div></div>
               <div id="groups-view" class="stack" hidden></div>
               <div id="recordings-list" class="rows"></div>
               <button id="recordings-more" class="btn small" type="button" data-i18n="action.more" hidden style="margin-top:8px"></button>
@@ -1058,9 +1059,32 @@ function paintRecorderTimer(view){
 function liveAvailable(){return (state.status?.rtc?.maximum_seconds||0)>=3600;}
 function liveWanted(){return liveAvailable()&&prefs.get('recordLive','0')==='1';}
 async function recordAction(action){
-  if(action==='stop'&&state.status?.rtc?.active)return run('rtc-stop',{}, {button:$('record-stop'),success:'recording.sent',poll:'await'});
+  if(action==='stop'){
+    const result=state.status?.rtc?.active?await run('rtc-stop',{}, {button:$('record-stop'),success:'recording.sent',poll:'await'}):await run('record',{action},{button:$('record-stop'),success:'recording.sent',poll:'await'});
+    if(result&&$('record-save-audio').checked)saveStoppedAudio();
+    return result;
+  }
   if(action==='start'&&liveAvailable()&&$('record-live').checked)return run('rtc-start',{seconds:4*3600,receive_audio:false},{button:$('record-start'),success:'recording.liveStarted',poll:'await'});
   return run('record',{action},{button:$('record-'+action),success:'recording.sent',poll:'await'});
+}
+// Incognito audio is deleted when transcription finishes, so try right after Stop and keep trying
+// while the A2 uploads: every 5 s for 2 minutes, then every 15 s, for at most 15 minutes. Reads only.
+let savingStopped=false;
+async function saveStoppedAudio(){
+  if(savingStopped)return;savingStopped=true;toast(t('recording.saveAudioWaiting'));
+  const started=Date.now();
+  try{
+    while(Date.now()-started<15*60000){
+      await new Promise(done=>setTimeout(done,Date.now()-started<120000?5000:15000));
+      let response;
+      try{response=await api('recording-audio-latest',{},{download:true});}
+      catch(error){if(['busy','unavailable','failed'].includes(error.code))continue;toast(error.message,'error');return;}
+      if((response.headers.get('Content-Type')||'').includes('application/json'))continue;  // {ready:false}
+      saveBlob(await response.blob(),'recording-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.wav');
+      toast(t('recordings.saved'));return;
+    }
+    toast(t('recording.saveAudioGaveUp'),'error');
+  }finally{savingStopped=false;}
 }
 // Device writes need armed controls. Instead of refusing, ask for readiness and then
 // continue with the write the user already asked for; cancelling the dialog drops it.
@@ -1805,13 +1829,15 @@ function renderGroups(counts){
     if(result){groupsState.list=result.groups||[];renderGroups(result.counts||{});}}})]));
 }
 async function saveRecording(row,button){
-  const format=$('recordings-format').value;
+  const format='wav';
   const response=await run('recording-audio',{handle:row.handle,format},{button,download:true,poll:false});
   if(!response)return;
-  const blob=await response.blob(),url=URL.createObjectURL(blob);
-  const link=h('a',{href:url,download:(row.name||'recording').replace(/[\\/:*?"<>|]+/g,'-')+'.'+format});
-  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  saveBlob(await response.blob(),(row.name||'recording').replace(/[\\/:*?"<>|]+/g,'-')+'.'+format);
   toast(t('recordings.saved'));
+}
+function saveBlob(blob,name){
+  const url=URL.createObjectURL(blob),link=h('a',{href:url,download:name});
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 async function deleteRecording(row,button){
   const permanent=row.in_recycle_bin;
@@ -2290,6 +2316,7 @@ function initialize(){
   bind('device-check','click',()=>run('device-check',{}, {button:$('device-check'),poll:'await'}));
   bind('disarm-button','click',()=>run('disarm',{}, {button:$('disarm-button'),poll:'await'}));
   bind('record-live','change',event=>prefs.set('recordLive',event.target.checked?'1':'0'));
+  $('record-save-audio').checked=prefs.get('recordSaveAudio','0')==='1';bind('record-save-audio','change',event=>prefs.set('recordSaveAudio',event.target.checked?'1':'0'));
   bind('record-start','click',()=>recordAction('start'));bind('record-pause','click',()=>recordAction('pause'));
   bind('record-resume','click',()=>recordAction('resume'));bind('record-stop','click',()=>recordAction('stop'));
   bind('record-confirm','click',async()=>{if(await ask('recording.confirmTitle','recording.confirmText','recording.confirm'))await run('confirm-stopped',{physically_stopped:true},{button:$('record-confirm'),success:'recording.confirmed',poll:'await'});});

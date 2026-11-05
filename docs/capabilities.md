@@ -15,6 +15,7 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 | Function | Status | Notes |
 | --- | --- | --- |
 | Start, pause, resume, stop | ✅ | Each command is followed by a device check |
+| Download the original audio after Stop | ✅ | Recorder switch: after Stop the page fetches the recording's WAV as soon as the cloud has it, retrying for up to 15 minutes |
 | Real recorder state | ✅ | Read from the device and its cloud task, not from the last command; picks up recordings started with the A2's button and a switch-off |
 | Live transcript while recording | ✅ | Uses a realtime transcription session, the same route the app uses for a 4G A2 |
 | Realtime session | ✅ | Join, keep and leave, receive audio (counted, never saved or played) |
@@ -58,7 +59,8 @@ The same evidence levels are kept in code in [`capabilities.py`](../artifacts/st
 
 | Function | Status | Notes |
 | --- | --- | --- |
-| Cloud recordings: list, save original audio, make a note | 🔎 | The A2 records in incognito mode, so original audio is saved from Recordings |
+| Save a recording's original audio | ✅ | WAV only (the A2 uploads WAV). Save an incognito recording before transcription finishes, or turn automatic transcription off |
+| Cloud recordings: list, make a note | 🔎 | |
 | Delete a recording to the recycle bin, restore it | ✅ | Dangerous action |
 | Groups, markers, move | 🔎 | |
 | Voice memos: read, edit, delete, add to an assistant draft | 🔎 | |

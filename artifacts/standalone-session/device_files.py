@@ -22,7 +22,7 @@ GENERATE_URI='/r/Adaptor/DeviceTaskI/createGenerateMinutesTask'
 DELETE_URI='/r/Adaptor/DeviceFileI/deleteFiles'
 RECOVER_URI='/r/Adaptor/DeviceFileI/recoverFiles'
 RECYCLE,PERMANENT=3,1
-FORMATS=('ogg','mp3','wav')
+FORMATS=('wav',)  # the A2 uploads WAV; ogg and mp3 are not available
 NOTE_STATES={0:'not-transcribed',5:'not-transcribed',4:'transcribing',2:'transcribed',3:'failed'}
 HEADER_NAMES={'authorization','x-oss-security-token','x-acs-security-token','range','referer','x-oss-date','date'}
 
@@ -68,7 +68,7 @@ def parse_list(reply):
     return rows,cursor,body.get('hasMore') is True
 
 
-def download_request(config,fid,file_format='ogg'):
+def download_request(config,fid,file_format='wav'):
     if file_format not in FORMATS:raise ValueError('Unsupported audio format')
     return [{**owner(config),'fileId':file_id(fid),'format':file_format,'requestId':secrets.token_hex(16)}]
 

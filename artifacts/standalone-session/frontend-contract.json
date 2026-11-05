@@ -1295,15 +1295,32 @@
         ],
         "fields": {
           "handle": "string: handle from recordings",
-          "format": "string: ogg (default), mp3 or wav"
+          "format": "string: wav only (default; the A2 uploads WAV)"
         }
       },
       "response": "Attachment, not JSON: the audio file.",
-      "side_effects": "DeviceFileI.queryFileDownloadInfo, then a bounded, origin-checked download with the cloud-supplied headers into .private/media (0600), checked with ffprobe. Works for incognito recordings too.",
+      "side_effects": "DeviceFileI.queryFileDownloadInfo, then a bounded, origin-checked download with the cloud-supplied headers into .private/media (0600), checked with ffprobe. Works for incognito recordings only until transcription finishes, when the cloud deletes their audio.",
       "errors": [
         "refused",
         "busy",
-        "unavailable"
+        "unavailable",
+        "cloud_rejected"
+      ]
+    },
+    "recording-audio-latest": {
+      "purpose": "Save the WAV of the recording the A2 last reported, for Recorder → Download original audio after Stop.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Attachment, not JSON: the WAV file; or JSON {ready: false} while the cloud does not list or have the file yet.",
+      "side_effects": "One DeviceFileI.queryFileList read and, once the recording with the fid from the last device check is listed, the same queryFileDownloadInfo and bounded download as recording-audio. A read only, so the page repeats it.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "cloud_rejected"
       ]
     },
     "recording-delete": {

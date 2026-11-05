@@ -47,7 +47,7 @@ Notes on arguments, as observed:
 - `get_minutes_transcription`: `taskUuid`, `maxResults` 1–500 (default 200), `direction` 0 or 1. Keep the same `direction` when following `nextToken`. Paragraphs carry text, speaker and time.
 - `batch_get_minutes_details`: 1–50 UUIDs. Notes you cannot see are skipped as `OUT_OF_SCOPE` or `NOT_FOUND`.
 - `get_minutes_ai_summary`: `hasSummary: false` can also mean the summary is still being generated.
-- `get_minutes_media_url`: may return `available: false` or `INCOGNITO_MODE`. Text access does not imply audio access. The console saves original audio through the Recordings view instead.
+- `get_minutes_media_url`: may return `available: false` or `INCOGNITO_MODE`. Text access does not imply audio access. The console saves original audio as WAV through the Recordings view, or automatically after Stop, instead.
 - `list_audio_memos`: `pageSize` 1–1000, integer millisecond cursor, optional RFC 3339 time bounds.
 - `list_custom_templates`: `maxResults` 1–10. `list_system_templates`: `maxResults` 1–50; keep the locale on every cursor page.
 
