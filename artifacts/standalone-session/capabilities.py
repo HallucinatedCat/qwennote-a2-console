@@ -1,0 +1,48 @@
+"""Evidence levels for what the UI may claim. Stdlib only; no IO.
+
+VERIFICATION says how well each working capability is evidenced; the UI does not show it.
+Change a level only with evidence. "verified" means it was checked end to end.
+"owner-check" means the host side is complete and the remaining proof is a check the user
+makes on the A2 or with real notes. Functions that are blocked or out of scope are not
+shown in the UI at all.
+"""
+
+# (key, label, level, detail). level: verified | owner-check
+VERIFICATION=(
+    ('native_reads','Native reads','verified','verified'),
+    ('quotas','Membership and quotas','verified','current application account/device quotas and 4G usage verified; unreported text-summary and billing-cycle fields remain explicit'),
+    ('native_renewal','Native token renewal','verified','proactive renewal verified; natural-expiry renewal verified on the isolated validation lineage'),
+    ('recording','Recording controls','verified','start, pause, resume and stop confirmed on the A2; each command is followed by a device check'),
+    ('record_task','Device check','verified','confirmed: follows a stop, a button-started recording and a switch-off (the console showed not recording about 22 s after power-off; offline appears only once the cloud reports it)'),
+    ('note_favorite','Note favorites','verified','application-path favorite and removal verified on a disposable note; original state restored'),
+    ('device_identity','Device identity','verified','name, serial, firmware and battery read from the real bound-device response (firmware and battery from the device properties)'),
+    ('device_name','Device name editing','verified','rename and restore confirmed'),
+    ('note_sharing','Note sharing','owner-check','private and public switching confirmed; the new share password needs one check'),
+    ('native_transcript','Saved transcript','owner-check','text, speakers and times verified; long notes are most likely complete'),
+    ('note_replace','Transcript replacement','verified','literal replacement and exact restoration verified on a disposable note; marked paragraphs, large batches and server-side locking are out of scope'),
+    ('note_tags','Note and account tags','verified','creation, rename, automatic matching, deletion and membership replacement verified with restoration; an incomplete tag list is refused'),
+    ('note_summary','Summary editing','verified','default Markdown summary edit and exact restoration verified; other templates and rich summaries are out of scope'),
+    ('note_regenerate','Summary regeneration','verified','default two-stage regeneration, completion and exact restoration verified; other templates are out of scope'),
+    ('note_translate','Note translation','verified','title, summary, key points, action items and transcript confirmed'),
+    ('note_export','Note export','verified','application-path original/translated/bilingual transcript and default-summary exports in TXT, Markdown, DOCX and PDF, plus transcript SRT; all format combinations and bilingual summary verified'),
+    ('note_media','Original media saving','owner-check','the A2 always records incognito, so original audio now comes from Recordings (DeviceFileI download, no incognito check in the app); save one recording once'),
+    ('settings_write','Settings writes','verified','effects confirmed; settings can change while recording'),
+    ('live_transcript','Live transcript','owner-check','the app records a 4G A2 with live text through a realtime transcription session; the recorder Live transcript switch does the same; check that text appears'),
+    ('rtc_playback','Realtime session','verified','joining, keeping and leaving the session and receiving nonzero audio verified; playback and live translation are not built'),
+    ('recordings','Recordings','owner-check','list, original audio, make a note, recycle bin and restore built from the DeviceFileI contract; load the list and save one recording'),
+    ('dangerous_actions','Dangerous actions','owner-check','note delete, recording delete, voiceprint clear and unbind behind a switch and a typed word; delete one disposable note and recording to check'),
+    ('mcp_writes','MCP write path','owner-check','title, summary, find and replace, speaker and hot words on a separate write grant; consent once, then rename a note'),
+    ('account_settings','Account settings','owner-check','smart slicing and voiceprint on/off from the account-settings contract; change one and reload'),
+    ('voice_button','Voice button','owner-check','cloud setting written as the app writes it; the app also sends a Bluetooth-only device command, so check that a press does the chosen action'),
+    ('builtin_assistant','Built-in AI Assistant','verified','general and note-scoped Q&A, continued sessions, current history, explicit task-result recovery and vendor-wide listing/post-restart restoration are runtime-verified'),
+)
+LEVELS=('verified','owner-check')
+VIEWS=('live','assistant','notes','memos','settings','dev')  # dev = Dev tools tab: test-only functions
+
+
+def verification_levels():
+    return [{'key':key,'label':label,'level':level,'detail':detail} for key,label,level,detail in VERIFICATION]
+
+
+def verification_details():
+    return {key:detail for key,_,_,detail in VERIFICATION}

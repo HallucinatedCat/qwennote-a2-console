@@ -1,0 +1,1763 @@
+{
+  "version": 1,
+  "template": {
+    "default": "web.html",
+    "replacement": "Start web_backend.py with --frontend /absolute/path/to/page.html",
+    "reload": "The selected regular file is read on every GET /; replace it atomically and reload the browser.",
+    "maximum_bytes": 2097152,
+    "placeholders": [
+      "__CSRF__",
+      "__NONCE__",
+      "__I18N__"
+    ],
+    "placeholder_count": "Each placeholder must occur exactly once.",
+    "catalog_source": "i18n/*.json remains beside web_backend.py, not in the custom template."
+  },
+  "transport": {
+    "cookie": "Open GET / first to receive the process-local qn_ui HttpOnly SameSite=Strict cookie.",
+    "post_prefix": "/api/",
+    "csrf_header": "X-CSRF-Token",
+    "content_type": "application/json",
+    "body_max_bytes": 65536,
+    "status_poll_seconds": 2,
+    "hidden_status_poll_seconds": 10,
+    "error_shape": {
+      "error": "string",
+      "code": "string",
+      "message": "string"
+    },
+    "http_errors": {
+      "400": "Malformed request at the HTTP layer",
+      "403": "Missing/expired UI cookie, CSRF or same-origin check",
+      "404": "Unknown action",
+      "409": "Public refusal, busy, stale state or unavailable dependency",
+      "502": "Unexpected backend failure with a generic public message"
+    },
+    "download_exception": "note-export returns an attachment with its format-specific MIME; note-media-download returns JSON metadata only.",
+    "cache": "Cloud reads of notes, summaries, tags, sharing, favorites, quotas and memos are served from a server-side cache for 24 hours, and option lists (translation languages, interpreter options, generation options) for 7 days. A response from the cache carries X-Cached-At (Unix seconds when it was read from the cloud). Send \"refresh\": true in any POST body to bypass the cache. Writes drop the entries they affect."
+  },
+  "reads": {
+    "GET /api/status": {
+      "query": "Optional ?since=N returns only events with id greater than N. Optional ?settings_revision=R leaves out setting_details and setting_choices when R equals the current settings_revision, which every response carries.",
+      "response": "Cached status object: connection, device, settings, generation/notification groups, recording ownership, record_task, device_check, armed, cache (entries, oldest_at), transcript, rtc, live_diagnostics, pending flags, credentials, events, event_cursor, assistant state, settings_revision, action_timings (per action: count, failures, last_ms, max_ms, total_ms since start) and server_time.",
+      "side_effects": "None. It reads host memory only and never triggers a vendor refresh."
+    },
+    "GET /healthz": {
+      "query": "None. No UI cookie is required, but loopback Host and same-site checks apply.",
+      "response": "connection, worker_running, restart_safe and blocking[].",
+      "side_effects": "None. Use before an intentional restart; a safe response does not prove physical device behavior."
+    }
+  },
+  "actions": {
+    "account-settings": {
+      "purpose": "Read the account-level settings: smart slicing and voiceprint.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "slicing {enabled} and voiceprint {allowed, enabled, enrolled, available_to_account}.",
+      "side_effects": "Two reads (MoziCustomerSettingAppI.queryCustomerSetting, MoziVoicePrintAppI.getVoicePrintConfig), cached for a day.",
+      "errors": [
+        "unavailable"
+      ]
+    },
+    "assistant": {
+      "purpose": "Send one prompt to the built-in QwenNote assistant or the configured custom provider.",
+      "request": {
+        "required": [
+          "text"
+        ],
+        "optional": [
+          "request_id",
+          "provider",
+          "task_uuid"
+        ],
+        "fields": {
+          "text": "string: nonblank, 1 to 32000 characters",
+          "request_id": "string: caller-generated local cancellation handle",
+          "provider": "string: builtin (default) or custom",
+          "task_uuid": "string: listed note UUID, built-in provider only"
+        }
+      },
+      "response": "JSON with text, provider and route or cancellation/provider-outcome metadata.",
+      "side_effects": "Starts one bounded provider request. Built-in prompts reuse the backend-held conversation session until assistant-new or assistant-select-conversation. No microphone, device audio, note write or automatic forwarding. Built-in note context requires a listed task_uuid.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "not_ready"
+      ]
+    },
+    "assistant-cancel": {
+      "purpose": "Cancel the active host assistant request.",
+      "request": {
+        "required": [
+          "request_id"
+        ],
+        "optional": [],
+        "fields": {
+          "request_id": "string: active local request handle"
+        }
+      },
+      "response": "JSON cancellation state. The provider may already have processed the prompt.",
+      "side_effects": "Cancels local HTTP work only; it cannot retract provider-side processing.",
+      "errors": [
+        "refused"
+      ]
+    },
+    "assistant-note-size": {
+      "purpose": "Count the characters of a listed note's saved transcript, shown when the note is attached to a built-in assistant question.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: note UUID from the owner's notes list"
+        }
+      },
+      "response": "JSON with characters, paragraphs and complete (false after 2,000 paragraphs). The assistant reports no context use or limit.",
+      "side_effects": "Cloud reads of the transcript pages, served from the server-side cache while fresh.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "assistant-conversations": {
+      "purpose": "List saved built-in QwenNote conversations for explicit restoration.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "JSON with conversations[] containing opaque handle, title and date, plus provider and route. Vendor session identifiers are never returned.",
+      "side_effects": "Performs one bounded read-only application request for at most 100 deduplicated conversations and replaces the process-local handle map. No prompt replay, note write, device command or upstream deletion.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "not_ready"
+      ]
+    },
+    "assistant-history": {
+      "purpose": "Read the active built-in QwenNote conversation, including prompts and reply completion state.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "JSON with messages[] containing query, text and complete, plus latest text, provider and route. Session and task identifiers are not returned.",
+      "side_effects": "Uses the backend-held session ID for one read-only application history request. No prompt replay, note write, device command or upstream deletion.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "not_ready"
+      ]
+    },
+    "assistant-new": {
+      "purpose": "Start a fresh built-in conversation on the next prompt.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "JSON with new_conversation:true and upstream_deleted:false.",
+      "side_effects": "Clears only backend memory for the current session and recovery handle. Existing vendor conversation history is preserved; no upstream request.",
+      "errors": [
+        "busy"
+      ]
+    },
+    "assistant-recover": {
+      "purpose": "Recover an interrupted built-in reply by polling its existing vendor task result.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "JSON with recovered:true, text, provider and route, or a public error while recovery remains available.",
+      "side_effects": "Uses the backend-held task ID for bounded application querySummaryResult polling. Never resends the prompt or creates a note/device operation.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "not_ready"
+      ]
+    },
+    "assistant-select-conversation": {
+      "purpose": "Restore one listed built-in conversation and display its current history.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: opaque handle from assistant-conversations"
+        }
+      },
+      "response": "JSON with restored:true, messages[] containing query, text and complete, plus latest text, provider and route. Session and task identifiers are not returned.",
+      "side_effects": "Resolves the process-local handle, sets the backend session and performs one read-only history request. Replaces stale local recovery state and exposes recovery only when restored history reports an interrupted task. No prompt replay, note write, device command or upstream deletion.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "not_ready"
+      ]
+    },
+    "audio-memos": {
+      "purpose": "Read recent saved audio memos.",
+      "request": {
+        "required": [],
+        "optional": [
+          "limit"
+        ],
+        "fields": {
+          "limit": "integer: 1 to 100, default 20"
+        }
+      },
+      "response": "JSON with items containing text, created_at_ms and duration_ms, plus has_more.",
+      "side_effects": "Read-only application request with a 30-second cache. No media download or device attribution.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "ble-pairing-file": {
+      "purpose": "Download the Bluetooth pairing file for tools/a2-ble. Dangerous action.",
+      "request": {
+        "required": [
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "confirm": "string: pair"
+        }
+      },
+      "response": "Attachment, not JSON: a2-pairing.json with sn, device_secret, did and corp_id.",
+      "side_effects": "Reads the A2 serial and device secret from the bound-device record already in memory, and a stable client id kept in .private/ble-client.json. Requires dangerous actions; the values are never shown on the page or logged.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "cache-clear": {
+      "purpose": "Delete every saved cloud read, so the next reads go to the cloud.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "cleared true.",
+      "side_effects": "Deletes the cache files in protected storage. Journals, settings and credentials are untouched.",
+      "errors": []
+    },
+    "capture-start": {
+      "purpose": "Start bounded private diagnostics on the existing native receive loop.",
+      "request": {
+        "required": [],
+        "optional": [
+          "seconds"
+        ],
+        "fields": {
+          "seconds": "integer: 1 to 300, default 120"
+        }
+      },
+      "response": "Aggregate capture status with elapsed seconds, byte/row counters and limits.",
+      "side_effects": "Writes protected diagnostic data only. Does not start recording, arm controls or call the vendor.",
+      "errors": [
+        "refused",
+        "busy"
+      ]
+    },
+    "capture-stop": {
+      "purpose": "Finish the active diagnostic capture.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Final aggregate capture status; raw capture remains protected.",
+      "side_effects": "Stops diagnostics only. Never stops a recording.",
+      "errors": [
+        "refused"
+      ]
+    },
+    "confirm-stopped": {
+      "purpose": "Manually close the open recording after seeing the A2 stop, when a device check cannot reach the cloud.",
+      "request": {
+        "required": [
+          "physically_stopped"
+        ],
+        "optional": [],
+        "fields": {
+          "physically_stopped": "boolean: must be true"
+        }
+      },
+      "response": "Updated recording ownership state.",
+      "side_effects": "Clears the owned-test journal only after explicit confirmation. This is not a Stop command.",
+      "errors": [
+        "refused",
+        "busy"
+      ]
+    },
+    "dangerous": {
+      "purpose": "Turn the dangerous-actions switch on or off.",
+      "request": {
+        "required": [
+          "enabled"
+        ],
+        "optional": [
+          "confirm"
+        ],
+        "fields": {
+          "enabled": "boolean",
+          "confirm": "boolean: must be true to enable"
+        }
+      },
+      "response": "dangerous_enabled.",
+      "side_effects": "Saves the switch in .private/dangerous.json; no cloud call.",
+      "errors": [
+        "refused"
+      ]
+    },
+    "device-check": {
+      "purpose": "Check the A2 now: online state, battery and, when it reports a current recording, that recording task.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "device_check: state (recording, paused, idle, offline, unknown), online, checked_at, battery_percent, in_progress.",
+      "side_effects": "One bound-device read and at most one recording-task read. Opens the recording when the A2 is recording (including one started with its button) and closes it when the A2 is idle or offline. Runs automatically every 30 s while a recording is open and every 5 minutes otherwise.",
+      "errors": [
+        "busy",
+        "unavailable"
+      ]
+    },
+    "device-identity": {
+      "purpose": "Read the cached public identity projection for the selected bound device.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "JSON with name, sn, firmware_version, read_at, stale, revision, pending and restore availability.",
+      "side_effects": "No native request. Returns owner-only cached name/SN and opaque revision; firmware is null when unavailable.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "device-info": {
+      "purpose": "Product information and the phones linked to the A2.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "product (productName, deviceType, connectType, bindType, oneDevice) and phones[] (name, state: allowed, blocked or connected).",
+      "side_effects": "Two reads (getProductConfig, queryDeviceConnections). The connection request and update calls take the A2 over from the owner's phone and are not offered.",
+      "errors": [
+        "unavailable"
+      ]
+    },
+    "device-name": {
+      "purpose": "Refresh device identity and reconcile any pending rename journal.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Refreshed device-identity object and readback state.",
+      "side_effects": "Read-only native reconciliation. Never sends or replays a rename.",
+      "errors": [
+        "refused",
+        "unavailable",
+        "outcome_unknown"
+      ]
+    },
+    "device-name-restore": {
+      "purpose": "Restore the journaled original device name.",
+      "request": {
+        "required": [
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "expected_revision": "string: current opaque device-name revision"
+        }
+      },
+      "response": "Device identity with verified readback or pending uncertainty.",
+      "side_effects": "One explicit restore write while the requested name is still current. Never automatic.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "device-name-save": {
+      "purpose": "Rename the selected bound device through the application path.",
+      "request": {
+        "required": [
+          "name",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "name": "string: trimmed device name, at most 32 weighted units",
+          "expected_revision": "string: current opaque device-name revision"
+        }
+      },
+      "response": "Device identity with verified readback or pending uncertainty.",
+      "side_effects": "Single-shot rename with a protected original-name journal and strict readback. Maximum 32 weighted units.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "device-unbind": {
+      "purpose": "Unbind the A2 from the account on the server. Dangerous action.",
+      "request": {
+        "required": [
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "confirm": "string: unbind"
+        }
+      },
+      "response": "unbound true.",
+      "side_effects": "One DeviceI.unbindV3 write, journaled first and never retried. The console then loses the device. Binding again needs the official app and Bluetooth (activation reads a cipher from the A2). Requires dangerous actions to be enabled.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "disarm": {
+      "purpose": "Disarm recording and RTC controls.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Updated readiness state.",
+      "side_effects": "Saves the disarmed state. Does not stop an active recording; Stop stays available while a recording is open.",
+      "errors": [
+        "refused"
+      ]
+    },
+    "documents": {
+      "purpose": "Invoke one of the 14 read-only QwenNote MCP tools through the host adapter.",
+      "request": {
+        "required": [
+          "tool",
+          "arguments"
+        ],
+        "optional": [],
+        "fields": {
+          "tool": "string: one of the documented read-only MCP tool names",
+          "arguments": "object: schema for the selected tool"
+        }
+      },
+      "response": "JSON MCP result envelope. The default template decodes its structured content for notes, summaries, transcripts and extras.",
+      "side_effects": "Read-only MCP call with a 60-second total deadline and no automatic retry. Generic write tools are not exposed.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "generation": {
+      "purpose": "Save summary-generation mode, minimum duration and maximum duration as one batch.",
+      "request": {
+        "required": [
+          "values"
+        ],
+        "optional": [
+          "persistent_override"
+        ],
+        "fields": {
+          "values": "object: complete auto_generate_minutes, auto_generate_minutes_duration and auto_generate_minutes_duration_limit values",
+          "persistent_override": "boolean: true only, required for a new persistent override"
+        }
+      },
+      "response": "Updated generation-group descriptor and restoration state.",
+      "side_effects": "Device-setting write requiring readiness and a before-write journal. Persistent inherited overrides require confirmation.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "mcp-login-finish": {
+      "purpose": "Finish an MCP login with the address the browser ended on, when it could not return to the console by itself.",
+      "request": {
+        "required": [
+          "url"
+        ],
+        "optional": [],
+        "fields": {
+          "url": "string: the full address from the browser bar after approving"
+        }
+      },
+      "response": "granted true and access.",
+      "side_effects": "Exchanges the one-time code (PKCE) at the token endpoint and stores the tokens in the reader's format: the read store for read access, .private/write for write access. GET /mcp/callback does the same when the vendor returns to the console.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "mcp-login-start": {
+      "purpose": "Start owner consent for MCP read or write access, returning to this console's own port.",
+      "request": {
+        "required": [
+          "access"
+        ],
+        "optional": [
+          "return_to"
+        ],
+        "fields": {
+          "access": "string: read or write",
+          "return_to": "string: console (default; the vendor returns to /mcp/callback on this port) or registered (the address the existing client was registered with; then paste the final address)"
+        }
+      },
+      "response": "url to open in a new tab, and return_to.",
+      "side_effects": "Reads the public authorization-server metadata and keeps a one-time PKCE login in backend memory for 15 minutes. Reuses the existing client registration; registers nothing.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "memo-delete": {
+      "purpose": "Delete a voice memo. Dangerous action.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: memo handle"
+        }
+      },
+      "response": "deleted true.",
+      "side_effects": "One deleteMission; requires dangerous actions; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "memo-update": {
+      "purpose": "Edit a voice memo's text.",
+      "request": {
+        "required": [
+          "handle",
+          "text"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: memo handle from audio-memos",
+          "text": "string: at most 4000 characters"
+        }
+      },
+      "response": "saved true.",
+      "side_effects": "One DingerAiAssistantI.updateMission (content), as the app edits memos; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-delete": {
+      "purpose": "Delete a note permanently. Dangerous action; notes have no recycle bin.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "confirm": "string: delete"
+        }
+      },
+      "response": "deleted true.",
+      "side_effects": "One PortalMinutesI.deleteTaskV2 write after a fresh identity read, journaled first and never retried. Requires dangerous actions to be enabled.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-export": {
+      "purpose": "Download an original, translated or bilingual note transcript or default summary in an application-supported format.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "kind"
+        ],
+        "optional": [
+          "target_language",
+          "bilingual",
+          "file_format"
+        ],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "kind": "string: transcript or summary",
+          "target_language": "string: language key returned by note-translate-options; omit for the original",
+          "bilingual": "boolean: include source text with the translation; requires target_language, default false",
+          "file_format": "string: txt, markdown, docx or pdf; transcript also allows srt; default txt"
+        }
+      },
+      "response": "Attachment, not JSON: text/plain, text/markdown, DOCX or PDF. Request with download handling and create a Blob.",
+      "side_effects": "Target/format validation, application export and bounded host download with text decoding or DOCX/PDF signature checks. Vendor Markdown transport may be text/plain or text/markdown; binary responses may omit Content-Disposition, but the host response always uses attachment. No note edit or saved-language change; 8 MiB response limit and no automatic retry.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "note-favorite": {
+      "purpose": "Favorite or unfavorite a listed note.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "collected",
+          "expected_collected"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "collected": "boolean: desired favorite state",
+          "expected_collected": "boolean: state shown before the click"
+        }
+      },
+      "response": "JSON with collected, cloud acknowledgement, readback and verification state.",
+      "side_effects": "One application-path collectMinutes write after a fresh expected-state check and protected journal.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-favorite-status": {
+      "purpose": "Read favorite state and reconcile a matching pending journal.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with collected, verified true and changed false.",
+      "side_effects": "Native read only. Cannot clear a journal belonging to another note.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-markers": {
+      "purpose": "List a note's markers, or add a marker at a time.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [
+          "add_ms"
+        ],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "add_ms": "integer: milliseconds from the start; adds a marker first"
+        }
+      },
+      "response": "markers[] with kind (marker, image, text), time_ms and text.",
+      "side_effects": "MinutesNoteI.queryNoteList; with add_ms, one createNote (type 0) first, journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-mcp-write": {
+      "purpose": "Change a note or the personal hot words through an MCP write tool, as an alternative to the native application path.",
+      "request": {
+        "required": [
+          "tool",
+          "arguments"
+        ],
+        "optional": [],
+        "fields": {
+          "tool": "string: update_minutes_title, update_minutes_summary, replace_minutes_text, replace_speaker, add_personal_hot_word or delete_personal_hotword",
+          "arguments": "object: taskUuid (listed note) plus title, summaryText, originalText and replacedText, or speakerNick and targetNickName; hotWordList (1 to 50 words) for the hot-word tools"
+        }
+      },
+      "response": "tool, applied true and the MCP result envelope.",
+      "side_effects": "One MCP tools/call on the separate owner-consented write grant (artifacts/mcp-reader/.private/write, scope qwennote:read qwennote:write). The intent is journaled first; an unknown outcome is never retried. Drops the note's saved cloud reads. Available only when status.mcp_write_available is true and the server advertises the tool to that grant.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-media-download": {
+      "purpose": "Save a cloud-stored original audio recording into protected host storage.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with saved, random local filename, byte count, SHA-256, MIME, source, expected duration and ffprobe audio metadata. Signed URLs and absolute host paths are excluded.",
+      "side_effects": "Reads minutesDetailV2, queryPlayInfo and queryDownloadUrl, then downloads once to .private/media with mode 0700 and file mode 0600. A rejected or empty download-URL reply falls back to the official mobile/PC play URL; detail/play failures and missing URLs refuse the save. Requires audio mediaType audio, application non-incognito semantics (isIncognitoMode other than true), current cloud storage 0 and current incognito mode 0. HTTPS origin allowlist, public-DNS pinning, redirects disabled, 512 MiB cap, 300-second transfer bound, ffprobe audio validation and partial-file cleanup. Writes protected note-media.json without URLs or paths; no setting or note writes and no automatic retry.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "note-regenerate": {
+      "purpose": "Regenerate the default Markdown summary through the two-stage application flow.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "expected_revision": "string: current opaque summary revision"
+        }
+      },
+      "response": "JSON with accepted/pending state and, when complete, summary text and revision.",
+      "side_effects": "Starts manualRegenerateSummary then generateMinutesSummary. Completion is asynchronous; refresh reconciles without replay.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-replace-preview": {
+      "purpose": "Preview literal, case-sensitive transcript replacement.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "find",
+          "replace"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "find": "string: nonblank literal text",
+          "replace": "string: literal replacement, may be empty"
+        }
+      },
+      "response": "JSON with matches, changed paragraph count, before/after rows and an opaque revision.",
+      "side_effects": "Read-only full native transcript snapshot. Invalidated when find or replace input changes.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-replace-save": {
+      "purpose": "Apply a fresh transcript replacement preview.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "find",
+          "replace",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "find": "string: previewed literal text",
+          "replace": "string: previewed replacement",
+          "expected_revision": "string: opaque preview revision"
+        }
+      },
+      "response": "JSON with verified readback or pending uncertainty.",
+      "side_effects": "One bounded updateParagraph batch, at most 20 changed paragraphs and 1000 matches. Marked paragraphs are refused.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-share": {
+      "purpose": "Read private/public note-sharing state and preserved options.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with access, enabled options, sharing flag, revision and pending state. Passwords, role codes and subresource IDs are not exposed.",
+      "side_effects": "Native application read only; also reconciles exact original/requested journal states without a write.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-share-save": {
+      "purpose": "Set note scope to private or public.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "access",
+          "expected_revision"
+        ],
+        "optional": [
+          "password"
+        ],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "access": "string: private or public",
+          "expected_revision": "string: current opaque sharing revision",
+          "password": "string: 4 to 16 letters and digits with public access; empty string removes the password"
+        }
+      },
+      "response": "Updated sharing state with strict readback or pending uncertainty.",
+      "side_effects": "Explicit scope write with protected journal. Public mutation is prohibited by the current project constraint.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-share-url": {
+      "purpose": "Read the application-provided HTTPS share URL for explicit clipboard copying in the current private or public scope.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with url, access and sharing_enabled. The URL is sensitive and is returned only to this explicit request.",
+      "side_effects": "Two native application reads. No scope write, URL opening, external transmission or journal mutation.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "note-speaker-rename": {
+      "purpose": "Rename a speaker across a note through the application path.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "from",
+          "to"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "from": "string: current speaker name, as shown",
+          "to": "string: new speaker name, at most 64 characters"
+        }
+      },
+      "response": "renamed: number of paragraphs.",
+      "side_effects": "Reads the whole transcript, picks the paragraphs of that speaker (as the app's 'all' choice does) and sends one batchUpdateParagraphNickName; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-summary": {
+      "purpose": "Read the complete default Markdown summary.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with text, revision, verified and pending.",
+      "side_effects": "Native read and read-only journal reconciliation for a recently listed own note.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-summary-save": {
+      "purpose": "Replace the default Markdown summary.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "text",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "text": "string: complete default Markdown summary",
+          "expected_revision": "string: current opaque summary revision"
+        }
+      },
+      "response": "Updated summary text/revision with verified readback or pending uncertainty.",
+      "side_effects": "One editFullTextSummary write with fresh revision check and original journal. Maximum 48 KiB.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-tag-create": {
+      "purpose": "Create an account tag with automatic matching off.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "name",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "name": "string: trimmed, at most 15 UTF-16 units",
+          "expected_revision": "string: current opaque tag revision"
+        }
+      },
+      "response": "Updated tag options and revision. The new tag is not assigned automatically.",
+      "side_effects": "One addTag write with fresh catalog, protected journal, acknowledged-ID readback and no automatic retry.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-tag-delete": {
+      "purpose": "Delete a tag definition that is not assigned to the open note.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "handle",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "handle": "string: opaque tag option handle",
+          "expected_revision": "string: current opaque tag revision"
+        }
+      },
+      "response": "Updated tag options and revision.",
+      "side_effects": "One deleteTag write after fresh membership checks. Existing assignments must be preserved.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-tag-rename": {
+      "purpose": "Rename a tag and optionally change its automatic-matching flag.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "handle",
+          "name",
+          "expected_revision"
+        ],
+        "optional": [
+          "auto_match"
+        ],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "handle": "string: opaque tag option handle",
+          "name": "string: trimmed, at most 15 UTF-16 units",
+          "expected_revision": "string: current opaque tag revision",
+          "auto_match": "boolean: desired automatic-matching flag"
+        }
+      },
+      "response": "Updated tag options and revision.",
+      "side_effects": "One updateTag write. Hidden description is preserved; omitted auto_match preserves the current flag.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-tags": {
+      "purpose": "Read account tag options and memberships for the open note.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with options, selected_handles, revision, verified and pending.",
+      "side_effects": "Native catalog and membership reads. Opaque handles keep raw tag IDs in the backend.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-tags-save": {
+      "purpose": "Replace the complete set of tags assigned to the open note.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "selected_handles",
+          "expected_revision"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "selected_handles": "array of strings: complete desired opaque-handle set",
+          "expected_revision": "string: current opaque tag revision"
+        }
+      },
+      "response": "Updated selected_handles, options and revision with readback state.",
+      "side_effects": "One complete membership replacement with original journal. Does not edit tag definitions.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "note-transcript": {
+      "purpose": "Read one native saved-transcript page.",
+      "request": {
+        "required": [
+          "task_uuid",
+          "next_token"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "next_token": "string or null: null starts a fresh page; otherwise use the issued token"
+        }
+      },
+      "response": "JSON with rows containing text/speaker/timing, next_token and note identity.",
+      "side_effects": "Read-only application paging, 200 rows per page. Continuation tokens expire after 15 minutes and reject stale notes.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-translate": {
+      "purpose": "Read a translated title, default summary, brief sections and one transcript page.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [
+          "target_language",
+          "next_token"
+        ],
+        "fields": {
+          "task_uuid": "string: listed note UUID",
+          "target_language": "string: target key from note-translate-options; use for a new view",
+          "next_token": "string: issued continuation token; use instead of target_language"
+        }
+      },
+      "response": "JSON with title, summary, brief_items, rows and next_token.",
+      "side_effects": "Separate translated view only. Never changes the original note or saved language preference.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "note-translate-options": {
+      "purpose": "List supported translation targets and detect the note source language.",
+      "request": {
+        "required": [
+          "task_uuid"
+        ],
+        "optional": [],
+        "fields": {
+          "task_uuid": "string: listed note UUID"
+        }
+      },
+      "response": "JSON with source_language and targets containing key/label.",
+      "side_effects": "Native language-catalog read only. No preference write.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "notes-browse": {
+      "purpose": "Search all notes, list favorites or a tag, or list the tags to filter by.",
+      "request": {
+        "required": [
+          "mode"
+        ],
+        "optional": [
+          "query",
+          "tag"
+        ],
+        "fields": {
+          "mode": "string: search, favorites, tag or tags",
+          "query": "string: search text (search)",
+          "tag": "string: tag handle from mode tags (tag)"
+        }
+      },
+      "response": "items[] in the notes-list shape (uuid, title, gmtCreate, durationMillis, collected), or tags[] with handle and name.",
+      "side_effects": "One read (searchA1Minutes, queryCollectedMinutes, fetchMinutesListByTag or getHomeTabList). Listed notes become usable for note actions.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "notification": {
+      "purpose": "Save task-completion alert method and optionally its organization.",
+      "request": {
+        "required": [
+          "method"
+        ],
+        "optional": [
+          "organization_handle",
+          "persistent_override"
+        ],
+        "fields": {
+          "method": "string: 0 for voice or 1 for vibration",
+          "organization_handle": "string: opaque option handle; omit to preserve current organization",
+          "persistent_override": "boolean: true only when confirming an inherited override"
+        }
+      },
+      "response": "Updated notification-group descriptor and restoration state.",
+      "side_effects": "Device-setting write requiring readiness. Organization handles are revalidated; unchanged values cause no write.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "notification-options": {
+      "purpose": "Load alert and organization option descriptors.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Notification-group object with method choices, organization options and opaque handles.",
+      "side_effects": "Read-only listActiveOrganizations request. No physical readiness required.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "quotas": {
+      "purpose": "Read membership and remaining account/device quotas, allowance detail and 4G usage.",
+      "request": {
+        "required": [],
+        "optional": [
+          "organization_handle"
+        ],
+        "fields": {
+          "organization_handle": "string: current opaque organization option; omit for the default personal scope"
+        }
+      },
+      "response": "JSON with queried_at, selected opaque organization handle/label and account, device, detail, traffic sections. Each section has available and data.",
+      "side_effects": "Four read-only native application requests for the selected scope, with per-section availability, caching and no device mutation. Raw organization IDs stay backend-only.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "ready": {
+      "purpose": "Arm the recording and RTC controls until Disarm.",
+      "request": {
+        "required": [
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "confirm": "boolean: must be true"
+        }
+      },
+      "response": "armed true, ready_until (far future) and server_time.",
+      "side_effects": "Saves the armed state in protected storage, so it survives restarts. Sends no device command. The earlier body with physical_ready, device_idle and disposable_only all true is still accepted.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "reconnect": {
+      "purpose": "Restart a stopped native connection worker.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Connection/worker state.",
+      "side_effects": "Creates no second refresh owner. Refused while the existing worker runs.",
+      "errors": [
+        "refused",
+        "not_ready"
+      ]
+    },
+    "record": {
+      "purpose": "Send a Record, Pause, Resume or Stop command to the A2.",
+      "request": {
+        "required": [
+          "action"
+        ],
+        "optional": [],
+        "fields": {
+          "action": "string: start, pause, resume or stop"
+        }
+      },
+      "response": "JSON command acknowledgement and physical_result unverified; the device check about 8 s later shows the result.",
+      "side_effects": "Start first runs a device check and is refused when the A2 is offline or already recording. Pause, resume and stop need an open recording (started here or found by a device check). Ambiguous commands are never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "not_ready",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "record-task": {
+      "purpose": "Refresh the last observed account/device-matched cloud recording task.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Public record_task summary with cloud status, timestamps, real_time_asr and physical_state_verified false.",
+      "side_effects": "Explicit native read. Does not accept IDs, change ownership or mutate the device.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "recording-audio": {
+      "purpose": "Save one recording's original audio in protected storage and download it.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [
+          "format"
+        ],
+        "fields": {
+          "handle": "string: handle from recordings",
+          "format": "string: ogg (default), mp3 or wav"
+        }
+      },
+      "response": "Attachment, not JSON: the audio file.",
+      "side_effects": "DeviceFileI.queryFileDownloadInfo, then a bounded, origin-checked download with the cloud-supplied headers into .private/media (0600), checked with ffprobe. Works for incognito recordings too.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "recording-delete": {
+      "purpose": "Move a recording to the recycle bin, or delete it permanently. Dangerous action.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [
+          "permanent",
+          "confirm"
+        ],
+        "fields": {
+          "handle": "string: handle from recordings",
+          "permanent": "boolean: true deletes permanently; default false moves to the recycle bin",
+          "confirm": "string: delete, required when permanent is true"
+        }
+      },
+      "response": "applied true.",
+      "side_effects": "One DeviceFileI.deleteFiles write (state 3 recycle bin, state 1 permanent), journaled first and never retried. Requires dangerous actions to be enabled.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-group-delete": {
+      "purpose": "Delete a recording group. Dangerous action.",
+      "request": {
+        "required": [
+          "group",
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "group": "string: group handle",
+          "confirm": "string: delete"
+        }
+      },
+      "response": "The groups after the change.",
+      "side_effects": "One deleteFileGroups; what happens to the group's recordings is not shown by the app. Requires dangerous actions.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-group-save": {
+      "purpose": "Create a recording group, or rename one.",
+      "request": {
+        "required": [
+          "name"
+        ],
+        "optional": [
+          "group"
+        ],
+        "fields": {
+          "name": "string: at most 60 characters",
+          "group": "string: group handle to rename"
+        }
+      },
+      "response": "The groups after the change.",
+      "side_effects": "One createFileGroup or updateFileGroup (a full replace with the other fields unchanged); journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-groups": {
+      "purpose": "List the recording groups with file counts.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "groups[] with handle, name and files; counts (total, ungrouped, recycle_bin).",
+      "side_effects": "One DeviceFileI.queryFileGroupList read.",
+      "errors": [
+        "unavailable"
+      ]
+    },
+    "recording-make-note": {
+      "purpose": "Ask the cloud to turn a recording into a note.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: handle from recordings"
+        }
+      },
+      "response": "applied true.",
+      "side_effects": "One DeviceTaskI.createGenerateMinutesTask write, journaled first and never retried. The note appears in the list when the cloud finishes.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-marker-delete": {
+      "purpose": "Delete a recording marker or text note.",
+      "request": {
+        "required": [
+          "marker"
+        ],
+        "optional": [],
+        "fields": {
+          "marker": "string: marker handle"
+        }
+      },
+      "response": "deleted true.",
+      "side_effects": "One DeviceNoteI.deleteNote; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-marker-save": {
+      "purpose": "Add a marker or text note to a recording, or edit a text note.",
+      "request": {
+        "required": [],
+        "optional": [
+          "handle",
+          "time_ms",
+          "text",
+          "marker"
+        ],
+        "fields": {
+          "handle": "string: recording handle (to add)",
+          "time_ms": "integer: milliseconds from the start (to add)",
+          "text": "string: note text, at most 2000 characters; without it a plain marker is added",
+          "marker": "string: marker handle (to edit its text)"
+        }
+      },
+      "response": "saved true.",
+      "side_effects": "One DeviceNoteI.createNote (noteType 0 or 2) or updateNote; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-markers": {
+      "purpose": "List the markers and text notes of a recording.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: handle from recordings"
+        }
+      },
+      "response": "markers[] with handle, kind, time_ms and text.",
+      "side_effects": "One DeviceNoteI.queryNoteList read by the recording's fid.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "recording-move": {
+      "purpose": "Move a recording into a group.",
+      "request": {
+        "required": [
+          "handle",
+          "group"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: recording handle",
+          "group": "string: group handle from a recording or the group list"
+        }
+      },
+      "response": "moved true.",
+      "side_effects": "One batchUpdateFileToGroup; journaled, never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recording-recover": {
+      "purpose": "Restore a recording from the recycle bin.",
+      "request": {
+        "required": [
+          "handle"
+        ],
+        "optional": [],
+        "fields": {
+          "handle": "string: handle from recordings"
+        }
+      },
+      "response": "applied true.",
+      "side_effects": "One DeviceFileI.recoverFiles write, journaled first and never retried.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "recordings": {
+      "purpose": "List the A2's recordings stored in the cloud, including ones that are not notes yet.",
+      "request": {
+        "required": [],
+        "optional": [
+          "next_token"
+        ],
+        "fields": {
+          "next_token": "string: issued continuation token for the next page"
+        }
+      },
+      "response": "recordings[] with handle, name, duration_ms, bytes, created_at_ms, note_state (not-transcribed, transcribing, transcribed, failed), incognito, in_recycle_bin, playable_from_cloud; has_more and next_token.",
+      "side_effects": "One DeviceFileI.queryFileList read. File ids stay in the backend; the page gets opaque handles.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable"
+      ]
+    },
+    "refresh": {
+      "purpose": "Refresh native discovery, reported settings and generation configuration.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Refreshed public status object.",
+      "side_effects": "Read-only native refresh. Does not arm controls or change settings.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "restore": {
+      "purpose": "Restore an existing individual device-setting override from its journal.",
+      "request": {
+        "required": [
+          "key"
+        ],
+        "optional": [],
+        "fields": {
+          "key": "string: supported reported setting key"
+        }
+      },
+      "response": "Updated setting descriptor and restoration state.",
+      "side_effects": "One restoration write. Cannot claim to restore unsupported inheritance.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "restore-generation": {
+      "purpose": "Restore the complete original summary-generation group.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Updated generation-group descriptor.",
+      "side_effects": "Restores only an exactly restorable device-scope journal; no partial inheritance claim.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "restore-notification": {
+      "purpose": "Restore the original notification method and organization.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "Updated notification-group descriptor.",
+      "side_effects": "Restores only an exactly restorable journal; the old organization must remain available.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "rtc-options": {
+      "purpose": "Read realtime language and voice options for a scene.",
+      "request": {
+        "required": [],
+        "optional": [
+          "scene"
+        ],
+        "fields": {
+          "scene": "string: a1_transcribe (default) or a1_face2face"
+        }
+      },
+      "response": "JSON with languages and nested voices, each using labels and opaque handles.",
+      "side_effects": "Read-only native configuration with a five-minute cache. No conference or subscription is created.",
+      "errors": [
+        "refused",
+        "unavailable"
+      ]
+    },
+    "rtc-start": {
+      "purpose": "Start a realtime transcription session: the recorder Live transcript mode (until Stop, up to 4 hours) or a short Dev test.",
+      "request": {
+        "required": [],
+        "optional": [
+          "seconds",
+          "receive_audio"
+        ],
+        "fields": {
+          "seconds": "integer: 1 to 14400, default 20; capped just before the session renewal",
+          "receive_audio": "boolean: default false"
+        }
+      },
+      "response": "Accepted RTC state; later status carries completion and aggregate receive counters.",
+      "side_effects": "Creates an experimental recording/conference after ownership checks. Optional audio is receive-only, not played or saved.",
+      "errors": [
+        "refused",
+        "busy",
+        "not_ready",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "rtc-stop": {
+      "purpose": "Stop the owned RTC task and complete conference cleanup.",
+      "request": {
+        "required": [],
+        "optional": [],
+        "fields": {}
+      },
+      "response": "RTC stopping/completion state.",
+      "side_effects": "Cancels the owned task and performs stop/close/readback even after readiness expiry.",
+      "errors": [
+        "refused",
+        "busy"
+      ]
+    },
+    "setting": {
+      "purpose": "Change one supported individual device setting.",
+      "request": {
+        "required": [
+          "key",
+          "value"
+        ],
+        "optional": [
+          "persistent_override"
+        ],
+        "fields": {
+          "key": "string: supported reported setting key",
+          "value": "string: one of the current setting choices",
+          "persistent_override": "boolean: true only when confirming a new persistent override"
+        }
+      },
+      "response": "Updated setting descriptor and restoration state.",
+      "side_effects": "Requires readiness, idle test state, scope/choice validation and a before-write journal.",
+      "errors": [
+        "refused",
+        "busy",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "slicing-save": {
+      "purpose": "Turn smart slicing of long recordings on or off for the account.",
+      "request": {
+        "required": [
+          "enabled"
+        ],
+        "optional": [],
+        "fields": {
+          "enabled": "boolean"
+        }
+      },
+      "response": "The account settings after a fresh read.",
+      "side_effects": "One updateCustomerSetting write (smart_slice / enable_slice), journaled first and never retried. Requires armed controls.",
+      "errors": [
+        "refused",
+        "busy",
+        "not_ready",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "voiceprint-clear": {
+      "purpose": "Delete the enrolled voiceprint. Dangerous action.",
+      "request": {
+        "required": [
+          "confirm"
+        ],
+        "optional": [],
+        "fields": {
+          "confirm": "string: clear"
+        }
+      },
+      "response": "The account settings after a fresh read.",
+      "side_effects": "One clearVoicePrint write, journaled first and never retried. Requires armed controls and dangerous actions.",
+      "errors": [
+        "refused",
+        "busy",
+        "not_ready",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    },
+    "voiceprint-save": {
+      "purpose": "Turn voiceprint speaker recognition on or off.",
+      "request": {
+        "required": [
+          "enabled"
+        ],
+        "optional": [],
+        "fields": {
+          "enabled": "boolean"
+        }
+      },
+      "response": "The account settings after a fresh read.",
+      "side_effects": "One toggleVoicePrint write with shouldClearVoicePrint false, journaled first and never retried. Requires armed controls. Enrolling a voiceprint needs the official app and Bluetooth.",
+      "errors": [
+        "refused",
+        "busy",
+        "not_ready",
+        "unavailable",
+        "outcome_unknown",
+        "cloud_rejected"
+      ]
+    }
+  }
+}

@@ -1,0 +1,2367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1d21">
+<meta name="color-scheme" content="light dark">
+<title>QwenNote A2</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f5f7;--surface:#ffffff;--surface-2:#f0f2f5;--surface-3:#e6e9ee;
+  --border:#dfe2e7;--border-strong:#c4c9d1;
+  --text:#14171c;--text-2:#4a515d;--text-3:#5f6773;
+  --accent:#0b5cff;--accent-hover:#0849cc;--accent-press:#063da8;--accent-soft:#e8efff;--on-accent:#ffffff;
+  --rec:#d1251b;--rec-soft:#fdeceb;--on-rec:#ffffff;
+  --ok:#0d7a4f;--ok-soft:#e4f3eb;--warn:#8a5300;--warn-soft:#fff3dc;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);
+  --shadow-pop:0 16px 40px rgba(16,24,40,.18),0 2px 8px rgba(16,24,40,.08);
+  --r-sm:6px;--r:8px;--r-lg:12px;
+  --rail:76px;--top:56px;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111316;--surface:#1a1d21;--surface-2:#22262b;--surface-3:#2c3137;
+  --border:#2f343b;--border-strong:#434951;
+  --text:#eef0f3;--text-2:#bcc2cb;--text-3:#a0a7b2;
+  --accent:#4c8dff;--accent-hover:#6ea3ff;--accent-press:#93bbff;--accent-soft:#1c2b47;--on-accent:#06101f;
+  --rec:#ff6b60;--rec-soft:#3b1e1c;--on-rec:#2a0805;
+  --ok:#4cc38c;--ok-soft:#163327;--warn:#f2b45d;--warn-soft:#3a2b14;
+  --shadow:0 1px 2px rgba(0,0,0,.3);--shadow-pop:0 16px 40px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111316;--surface:#1a1d21;--surface-2:#22262b;--surface-3:#2c3137;
+    --border:#2f343b;--border-strong:#434951;
+    --text:#eef0f3;--text-2:#bcc2cb;--text-3:#a0a7b2;
+    --accent:#4c8dff;--accent-hover:#6ea3ff;--accent-press:#93bbff;--accent-soft:#1c2b47;--on-accent:#06101f;
+    --rec:#ff6b60;--rec-soft:#3b1e1c;--on-rec:#2a0805;
+    --ok:#4cc38c;--ok-soft:#163327;--warn:#f2b45d;--warn-soft:#3a2b14;
+    --shadow:0 1px 2px rgba(0,0,0,.3);--shadow-pop:0 16px 40px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;overscroll-behavior:none;height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.5 var(--font);font-feature-settings:"tnum" 0}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+h2{font-size:16px;font-weight:650}
+h3{font-size:14px;font-weight:650}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button,[role="tab"],summary{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.icon{width:20px;height:20px;flex:none;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.numeric,.badge,.timer{font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)}
+.small{font-size:13px}
+.tiny{font-size:12px}
+.mono{font-family:var(--mono);font-size:12px}
+.wrap{overflow-wrap:anywhere}
+.grow{flex:1;min-width:0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack.tight{gap:6px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+.skip-link{position:fixed;left:12px;top:-60px;z-index:100;background:var(--accent);color:var(--on-accent);padding:8px 12px;border-radius:var(--r)}
+.skip-link:focus{top:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--r);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-weight:600;cursor:pointer;white-space:nowrap;transition:background-color .12s,border-color .12s,color .12s}
+.btn.small{min-height:32px;padding:0 10px;font-size:13px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{background:var(--rec);border-color:var(--rec);color:var(--on-rec)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+.btn.link{background:transparent;border-color:transparent;color:var(--accent);padding:0 6px}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled,.icon-btn:disabled{opacity:.45;cursor:not-allowed}
+.btn[aria-busy="true"]{cursor:progress}
+.btn[aria-busy="true"]::after{content:"";width:12px;height:12px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
+.icon-btn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:var(--r);border:0;background:transparent;color:var(--text-2);cursor:pointer}
+.icon-btn[aria-pressed="true"]{color:var(--accent)}
+.icon-btn[aria-pressed="true"] .icon{fill:currentColor}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover:not(:disabled){border-color:var(--text-3)}
+  .btn.primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
+  .btn.danger:hover:not(:disabled){filter:brightness(.94)}
+  .btn.ghost:hover:not(:disabled),.btn.link:hover:not(:disabled){background:var(--surface-2);border-color:transparent}
+  .icon-btn:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+  .rail-item:hover{background:var(--surface-2);color:var(--text)}
+  .note-item:hover{background:var(--surface-2)}
+  .tab:hover{color:var(--text)}
+  .conversation:hover{background:var(--surface-2)}
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+input[type="text"],input[type="search"],input[type="number"],select,textarea{width:100%;min-height:36px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--border-strong);background:var(--surface);color:var(--text)}
+textarea{min-height:120px;resize:vertical;line-height:1.5}
+select{padding-right:28px}
+@media (pointer:coarse){input,select,textarea{font-size:16px}}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span{font-size:13px;font-weight:600;color:var(--text-2)}
+.field.inline{flex-direction:row;align-items:center;gap:8px}
+.field.inline>span{white-space:nowrap}
+.field.inline input{width:96px}
+.check{display:inline-flex;align-items:center;gap:8px;min-height:32px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border-strong);position:relative;margin:0;cursor:pointer;transition:background-color .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);transition:transform .15s var(--ease-out)}
+.switch input:checked{background:var(--accent);border-color:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:999px;background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;white-space:nowrap;flex:none}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.rec{background:var(--rec-soft);color:var(--rec)}
+.badge.accent{background:var(--accent-soft);color:var(--accent)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-3);flex:none}
+.dot.ok{background:var(--ok)}
+.dot.warn{background:var(--warn)}
+.dot.rec{background:var(--rec);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.notice{padding:10px 12px;border-radius:var(--r);background:var(--surface-2);color:var(--text-2);font-size:13px}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.accent{background:var(--accent-soft);color:var(--text)}
+
+/* Shell */
+.app{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);height:100dvh}
+.rail{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-right:1px solid var(--border)}
+.rail-brand{display:grid;place-items:center;width:40px;height:40px;margin-bottom:12px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-weight:800;font-size:15px;letter-spacing:.02em}
+.rail-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:64px;min-height:56px;border:0;border-radius:10px;background:transparent;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;line-height:1.2;text-align:center}
+.rail-item .icon{width:22px;height:22px}
+.rail-item[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.rail-spacer{flex:1}
+.workspace{display:grid;grid-template-rows:var(--top) minmax(0,1fr);min-width:0;min-height:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
+.view-title{font-size:16px;font-weight:700;white-space:nowrap}
+.search{position:relative;display:flex;align-items:center;width:min(320px,32vw)}
+.search .icon{position:absolute;left:10px;width:18px;height:18px;color:var(--text-3);pointer-events:none}
+.search input{padding-left:34px;background:var(--surface-2);border-color:transparent}
+.search input:focus{background:var(--surface);border-color:var(--accent)}
+.topbar-spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.body{display:flex;min-height:0;min-width:0}
+.main{flex:1;min-width:0;overflow:auto;outline:0}
+.view{min-height:100%}
+.view[data-panel="notes"],.view[data-panel="assistant"]{height:100%}
+.page{padding:24px;max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.page.narrow{max-width:880px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.page-head h2{font-size:20px;font-weight:700}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow);min-width:0}
+.card.flush{padding:0}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.card-head p{margin-top:2px}
+.rows{display:flex;flex-direction:column}
+.row-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)}
+.rows>.row-item:first-child{border-top:0}
+.placeholder{display:grid;place-items:center;text-align:center;padding:40px 16px;color:var(--text-2);gap:4px}
+.placeholder strong{display:block;color:var(--text);font-size:15px}
+.placeholder .icon{width:32px;height:32px;color:var(--text-3);margin:0 auto 6px}
+.skeleton{height:14px;border-radius:6px;background:linear-gradient(90deg,var(--surface-2),var(--surface-3),var(--surface-2));background-size:200% 100%;animation:shimmer 1.2s linear infinite;margin:8px 0}
+.skeleton.short{width:40%}
+@keyframes shimmer{to{background-position:-200% 0}}
+dl.facts{display:grid;grid-template-columns:minmax(120px,max-content) minmax(0,1fr);gap:6px 16px;margin:0}
+dl.facts dt{color:var(--text-2);font-size:13px}
+dl.facts dd{margin:0;overflow-wrap:anywhere}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--text-2);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+pre.code{margin:0;padding:12px;border-radius:var(--r);background:var(--surface-2);font:12px/1.5 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}
+.prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}
+.markdown{line-height:1.65;overflow-wrap:anywhere}
+.markdown>*:first-child{margin-top:0}
+.markdown h3{font-size:17px;margin:18px 0 6px}
+.markdown h4{font-size:15px;margin:14px 0 4px}
+.markdown h5,.markdown h6{font-size:14px;margin:12px 0 4px}
+.markdown p{margin:0 0 10px}
+.markdown ul,.markdown ol{margin:0 0 10px;padding-left:22px}
+.markdown li{margin:3px 0}
+.markdown code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.markdown hr{border:0;border-top:1px solid var(--border);margin:14px 0}
+.markdown>*:last-child{margin-bottom:0}
+.protocol{display:none}
+body.show-protocol .protocol{display:revert}
+
+/* Recorder control cluster */
+.control-dock{display:flex;align-items:center;gap:8px;min-width:0}
+.dock-state{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:600;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.dock-state.rec{background:var(--rec-soft);color:var(--rec)}
+.dock-buttons{display:flex;gap:6px}
+.dock-buttons .btn{min-height:32px;padding:0 12px;font-size:13px}
+.dock-slot.large .control-dock{flex-direction:column;align-items:stretch;gap:12px}
+.dock-slot.large .dock-state{display:none}
+.dock-slot.large .dock-buttons .btn{min-height:44px;padding:0 18px;font-size:14px;flex:1}
+.dock-slot.large .dock-assistant{display:none}
+
+/* Home */
+.home-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:16px;align-items:start}
+.home-main,.home-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.recorder-card{display:flex;flex-direction:column;gap:12px}
+.record-state{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;line-height:1.2}
+.device-check{margin-top:6px;align-items:center}
+.record-state .dot{width:12px;height:12px}
+.timer{font-size:15px;color:var(--text-2);font-weight:600}
+.transcript-row{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:12px;padding:10px 0;border-top:1px solid var(--border);align-items:start}
+.rows>.transcript-row:first-child{border-top:0}
+.transcript-row .when{color:var(--text-3);font-size:12px;font-variant-numeric:tabular-nums;padding-top:2px}
+.transcript-row.provisional .text{color:var(--text-3)}
+.transcript-row .text{overflow-wrap:anywhere}
+.live-rows{max-height:min(56dvh,560px);overflow:auto}
+.recent-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 8px;border:0;border-radius:var(--r);background:transparent;text-align:left;cursor:pointer}
+@media (hover:hover) and (pointer:fine){.recent-item:hover{background:var(--surface-2)}}
+
+/* Notes */
+.notes-layout{display:grid;grid-template-columns:320px minmax(0,1fr);height:100%;min-height:0}
+.notes-pane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border);background:var(--surface)}
+.pane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 16px 8px}
+.pane-search{margin:0 16px 8px;width:auto}
+.note-list{flex:1;overflow:auto;padding:4px 8px;display:flex;flex-direction:column;gap:2px}
+.note-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 10px;border:0;border-radius:var(--r);background:transparent;text-align:left;cursor:pointer;color:var(--text)}
+.note-item strong{font-weight:600;overflow-wrap:anywhere}
+.note-item span{font-size:12px;color:var(--text-3)}
+.note-item[aria-current="true"]{background:var(--accent-soft)}
+.note-item[aria-current="true"] strong{color:var(--accent)}
+.pane-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid var(--border)}
+.reader{min-width:0;min-height:0;overflow:auto;background:var(--bg)}
+.reader-inner{max-width:960px;margin:0 auto;padding:20px 24px 40px}
+.reader-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.reader-head h2{font-size:20px;font-weight:700;overflow-wrap:anywhere}
+.reader-head{flex-wrap:wrap}
+.reader-head>.grow{flex:1 1 240px}
+.reader-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.back-btn{display:none}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{position:relative;border:0;background:transparent;padding:10px 12px;color:var(--text-2);font-weight:600;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;border-radius:2px;background:var(--accent)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.tag-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;font-size:13px}
+.tag-chip input{position:absolute;opacity:0;pointer-events:none}
+.tag-chip:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.tag-chip:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.menu{position:relative}
+.menu>summary{list-style:none}
+.menu>summary::-webkit-details-marker{display:none}
+.menu-panel{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:min(340px,86vw);padding:12px;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:10px;transform-origin:top right;animation:pop .14s var(--ease-out)}
+.menu-row{display:flex;align-items:flex-end;gap:8px}
+@keyframes pop{from{opacity:0;transform:scale(.97)}}
+
+/* Assistant companion */
+.companion-dock{width:400px;flex:none;border-left:1px solid var(--border);background:var(--surface);min-height:0;display:flex}
+.companion{display:flex;flex-direction:column;min-height:0;width:100%;background:var(--surface)}
+.companion-head{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.companion-head h2{flex:1;font-size:15px}
+.companion-head .icon.brand{color:var(--accent)}
+.companion-head select{width:auto;min-height:32px;font-size:13px}
+.conversation-list{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:2px}
+.conversation{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;border:0;border-radius:var(--r);background:transparent;text-align:left;cursor:pointer}
+.conversation span{font-size:12px;color:var(--text-3)}
+.thread{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:88%;padding:10px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.bubble.assistant:not(.pending){white-space:normal}
+.bubble.user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.bubble.assistant{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}
+.bubble.pending{color:var(--text-3)}
+.bubble-actions{display:flex;gap:4px;margin-top:6px}
+.companion-tools{display:flex;align-items:center;gap:6px;padding:4px 12px;flex-wrap:wrap}
+.composer{border-top:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:8px}
+.composer textarea{min-height:76px;max-height:40dvh}
+.composer-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.assistant-host{height:100%;display:flex}
+.assistant-host .companion{max-width:980px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.assistant-host #companion-expand{display:none}
+
+/* Settings */
+.setting-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,260px);gap:8px 16px;padding:12px 0;border-top:1px solid var(--border);align-items:center}
+.setting-field:first-of-type{border-top:0}
+.setting-field .help{grid-column:1/-1;margin-top:-4px}
+.setting-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+.dev-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.dev-grid .wide{grid-column:1/-1}
+
+/* Toasts and dialogs */
+.toast-region{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:80;display:flex;flex-direction:column;gap:8px;max-width:min(420px,calc(100vw - 32px))}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:12px 12px 12px 14px;border-radius:var(--r-lg);background:var(--text);color:var(--surface);box-shadow:var(--shadow-pop);animation:pop .16s var(--ease-out)}
+.toast.error{background:var(--rec);color:var(--on-rec)}
+.toast p{flex:1}
+.toast button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+dialog{border:0;border-radius:var(--r-lg);padding:0;width:min(480px,calc(100vw - 32px));background:var(--surface);color:var(--text);box-shadow:var(--shadow-pop)}
+dialog::backdrop{background:rgba(10,14,20,.45)}
+dialog[open]{animation:pop .18s var(--ease-out)}
+.dialog-body{padding:20px;display:flex;flex-direction:column;gap:12px}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 20px}
+
+/* Phones and narrow windows */
+@media (max-width:1100px){.companion-dock{position:fixed;inset:var(--top) 0 0 auto;width:min(420px,100vw);z-index:40;box-shadow:var(--shadow-pop)}}
+@media (max-width:900px){.home-grid{grid-template-columns:minmax(0,1fr)}.dev-grid{grid-template-columns:minmax(0,1fr)}.search{display:none}}
+@media (max-width:767px){
+  :root{--top:52px}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .rail{grid-row:2;flex-direction:row;justify-content:space-around;gap:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid var(--border)}
+  .rail-brand,.rail-spacer{display:none}
+  .rail-item{width:auto;flex:1;min-height:52px;font-size:11px}
+  .workspace{grid-row:1}
+  .topbar{padding:0 12px;padding-top:env(safe-area-inset-top,0px);gap:8px}
+  .topbar #companion-toggle span,.chip span{display:none}
+  #dock-slot-top .dock-state{display:none}
+  .dock-buttons .btn{padding:0 10px}
+  .page{padding:16px}
+  .notes-layout{grid-template-columns:minmax(0,1fr)}
+  .notes-layout.reading .notes-pane{display:none}
+  .notes-layout:not(.reading) .reader{display:none}
+  .back-btn{display:inline-grid}
+  .reader-inner{padding:12px 16px 32px}
+  .reader-head{flex-wrap:wrap}
+  .companion-dock{inset:0;width:100vw;padding-top:env(safe-area-inset-top,0px);z-index:60}
+  .setting-field{grid-template-columns:minmax(0,1fr)}
+  .transcript-row{grid-template-columns:minmax(0,1fr)}
+  .transcript-row .when{padding:0}
+  .transcript-row>button{justify-self:start}
+  .toast-region{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .dot.rec{animation:none}
+}
+</style>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 12h7M9 16h7"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M12 8v4l3 2"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.6L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.6L20 16"/><path d="M20 20v-4h-4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/></symbol>
+</svg>
+<a class="skip-link" href="#main" data-i18n="app.skip">Skip to content</a>
+<div class="app">
+  <nav id="nav-main" class="rail" data-i18n-attr="aria-label=app.navigation">
+    <div class="rail-brand" aria-hidden="true">A2</div>
+    <button class="rail-item" type="button" data-view="live"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="tab.live"></span></button>
+    <button class="rail-item" type="button" data-view="notes"><svg class="icon" aria-hidden="true"><use href="#i-notes"/></svg><span data-i18n="tab.notes"></span></button>
+    <button class="rail-item" type="button" data-view="memos"><svg class="icon" aria-hidden="true"><use href="#i-mic"/></svg><span data-i18n="tab.memos"></span></button>
+    <button class="rail-item" type="button" data-view="assistant"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><span data-i18n="tab.assistant"></span></button>
+    <button class="rail-item" type="button" data-view="settings"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span data-i18n="tab.settings"></span></button>
+    <div class="rail-spacer"></div>
+    <button class="rail-item" type="button" data-view="dev"><svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg><span data-i18n="tab.dev"></span></button>
+  </nav>
+  <div class="workspace">
+    <header class="topbar">
+      <h1 id="view-title" class="view-title"></h1>
+      <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="global-search" type="search" autocomplete="off" enterkeyhint="search" data-i18n-attr="placeholder=app.search;aria-label=app.search"></label>
+      <div class="topbar-spacer"></div>
+      <div id="dock-slot-top" class="dock-slot"></div>
+      <button id="topbar-reconnect" class="btn small" type="button" data-i18n="dev.reconnect" hidden></button>
+      <button id="companion-toggle" class="btn ghost" type="button" aria-expanded="false" aria-controls="companion-dock"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><span data-i18n="app.openAssistant"></span></button>
+      <button id="connection-chip" class="chip" type="button"><i id="connection-dot" class="dot"></i><span id="connection-label"></span></button>
+    </header>
+    <div class="body">
+      <main id="main" class="main" tabindex="-1">
+
+        <section id="panel-live" class="view" data-panel="live">
+          <div class="page">
+            <div class="home-grid">
+              <div class="home-main">
+                <section class="card recorder-card" aria-labelledby="recorder-title">
+                  <div class="card-head"><div><h2 id="recorder-title" data-i18n="home.recorder"></h2><p id="readiness-label" class="small muted"></p></div><span id="record-badge" class="badge"></span></div>
+                  <p id="record-state" class="record-state"><i id="record-dot" class="dot"></i><span id="record-state-text"></span></p>
+                  <p id="record-timer" class="timer" hidden></p>
+                  <div class="row device-check"><span id="device-check-text" class="small muted grow"></span><button id="device-check" class="btn ghost small" type="button" data-i18n="device.check"></button></div>
+                  <label id="record-live-row" class="switch" hidden><input id="record-live" type="checkbox" role="switch"><span data-i18n="recording.live"></span></label>
+                  <div id="dock-slot-home" class="dock-slot large"></div>
+                  <p class="small muted" data-i18n="home.recorderHelp"></p>
+                </section>
+                <section class="card" aria-labelledby="live-title">
+                  <div class="card-head"><div><h2 id="live-title" data-i18n="live.heading"></h2><p class="small muted" data-i18n="live.transcriptHelp"></p></div><div class="row"><span id="live-count" class="badge"></span><select id="live-filter" data-i18n-attr="aria-label=live.filter"><option value="all" data-i18n="live.all"></option><option value="original" data-i18n="live.original"></option><option value="translated" data-i18n="live.translated"></option></select></div></div>
+                  <div id="live-rows" class="rows live-rows" aria-live="polite"></div>
+                </section>
+              </div>
+              <div class="home-side">
+                <section class="card" aria-labelledby="recent-title">
+                  <div class="card-head"><h2 id="recent-title" data-i18n="home.recent"></h2><button id="home-open-notes" class="btn link small" type="button" data-i18n="home.openNotes"></button></div>
+                  <div id="home-notes" class="rows"></div>
+                </section>
+                <section class="card" aria-labelledby="home-device-title">
+                  <div class="card-head"><h2 id="home-device-title" data-i18n="home.device"></h2></div>
+                  <div id="home-device"></div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-notes" class="view" data-panel="notes" hidden>
+          <div id="notes-layout" class="notes-layout">
+            <aside class="notes-pane" aria-labelledby="notes-heading">
+              <div class="pane-head"><h2 id="notes-heading" data-i18n="notes.heading"></h2><button id="notes-reload" class="icon-btn" type="button" data-i18n-attr="aria-label=notes.load;title=notes.load"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div>
+              <label class="search pane-search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input id="notes-search" type="search" autocomplete="off" data-i18n-attr="placeholder=notes.search;aria-label=notes.search"></label>
+              <div class="row pane-search"><select id="notes-source" class="grow" data-i18n-attr="aria-label=notes.source"><option value="all" data-i18n="notes.sourceAll"></option><option value="favorites" data-i18n="notes.sourceFavorites"></option></select></div>
+              <div id="notes-list" class="note-list"></div>
+              <div class="pane-foot"><span id="notes-status" class="small muted"></span><button id="notes-more" class="btn small" type="button" data-i18n="action.more" hidden></button></div>
+            </aside>
+            <section class="reader" data-i18n-attr="aria-label=note.sections">
+              <div id="notes-empty" class="placeholder"><div><svg class="icon" aria-hidden="true"><use href="#i-notes"/></svg><strong data-i18n="notes.emptyTitle"></strong><span data-i18n="notes.emptyBody"></span></div></div>
+              <div id="notes-select" class="placeholder" hidden><div><svg class="icon" aria-hidden="true"><use href="#i-notes"/></svg><strong data-i18n="notes.selectTitle"></strong><span data-i18n="notes.selectBody"></span></div></div>
+              <article id="note-detail" class="reader-inner" hidden>
+                <header class="reader-head">
+                  <button id="note-back" class="icon-btn back-btn" type="button" data-i18n-attr="aria-label=app.back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+                  <div class="grow"><h2 id="note-title"></h2><form id="note-title-form" class="row" hidden><input id="note-title-input" type="text" maxlength="200" class="grow" data-i18n-attr="aria-label=note.rename"><button class="btn primary small" type="submit" data-i18n="note.titleSave"></button><button id="note-title-cancel" class="btn small" type="button" data-i18n="action.cancel"></button></form><p id="note-meta" class="small muted numeric"></p></div>
+                  <div class="reader-actions">
+                    <button id="note-rename" class="icon-btn" type="button" hidden data-i18n-attr="aria-label=note.rename;title=note.rename"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></button>
+                    <button id="note-reload" class="icon-btn" type="button" data-i18n-attr="aria-label=note.reload;title=note.reload"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+                    <button id="note-favorite" class="icon-btn" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></button>
+                    <button id="note-ask" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg><span data-i18n="note.askAssistant"></span></button>
+                    <details id="export-menu" class="menu">
+                      <summary class="btn small"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span data-i18n="note.export"></span></summary>
+                      <div class="menu-panel">
+                        <div class="menu-row"><label class="field grow"><span data-i18n="note.transcript"></span><select id="transcript-export-format" data-i18n-attr="aria-label=note.exportFormat"><option value="txt">TXT</option><option value="markdown">Markdown</option><option value="srt">SRT</option><option value="docx">DOCX</option><option value="pdf">PDF</option></select></label><button id="note-export-transcript" class="btn small" type="button" data-i18n="note.exportTranscript"></button></div>
+                        <div class="menu-row"><label class="field grow"><span data-i18n="note.summary"></span><select id="summary-export-format" data-i18n-attr="aria-label=note.exportFormat"><option value="txt">TXT</option><option value="markdown">Markdown</option><option value="docx">DOCX</option><option value="pdf">PDF</option></select></label><button id="note-export-summary" class="btn small" type="button" data-i18n="note.exportSummary"></button></div>
+                        <button id="note-media-download" class="btn small" type="button" data-i18n="media.download"></button>
+                        <button id="note-delete" class="btn danger small" type="button" data-i18n="note.delete" hidden></button>
+                      </div>
+                    </details>
+                  </div>
+                </header>
+                <div class="tabs" role="tablist" data-i18n-attr="aria-label=note.sections">
+                  <button class="tab" type="button" role="tab" data-note-tab="summary" aria-selected="true" data-i18n="note.summary"></button>
+                  <button class="tab" type="button" role="tab" data-note-tab="transcript" aria-selected="false" data-i18n="note.transcript"></button>
+                  <button class="tab" type="button" role="tab" data-note-tab="translate" aria-selected="false" data-i18n="note.translate"></button>
+                  <button class="tab" type="button" role="tab" data-note-tab="organize" aria-selected="false" data-i18n="note.organize"></button>
+                  <button class="tab" type="button" role="tab" data-note-tab="details" aria-selected="false" data-i18n="note.details"></button>
+                </div>
+
+                <div data-note-panel="summary" role="tabpanel">
+                  <div class="toolbar"><span id="summary-state" class="small muted"></span><div class="row"><button id="summary-load" class="icon-btn" type="button" data-i18n-attr="aria-label=action.refresh;title=action.refresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button><button id="note-add-draft" class="btn ghost small" type="button" data-i18n="note.addSummary"></button><button id="summary-regenerate" class="btn small" type="button" data-i18n="summary.regenerate"></button><button id="summary-edit" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg><span data-i18n="summary.edit"></span></button></div></div>
+                  <div id="summary-view" class="card"></div>
+                  <div id="summary-edit-area" class="stack" hidden>
+                    <label class="field"><span data-i18n="summary.markdown"></span><textarea id="summary-editor" maxlength="49152" rows="16"></textarea></label>
+                    <div class="row"><button id="summary-save" class="btn primary" type="button" data-i18n="summary.save"></button><button id="summary-cancel" class="btn" type="button" data-i18n="summary.cancelEdit"></button></div>
+                  </div>
+                </div>
+
+                <div data-note-panel="transcript" role="tabpanel" hidden>
+                  <div class="toolbar"><label class="field inline"><span data-i18n="transcript.source"></span><select id="transcript-source"><option value="native" data-i18n="transcript.native"></option><option value="mcp" data-i18n="transcript.mcp"></option></select></label><div class="row"><button id="transcript-load" class="icon-btn" type="button" data-i18n-attr="aria-label=action.refresh;title=action.refresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button><button id="transcript-draft" class="btn ghost small" type="button" data-i18n="transcript.addDraft"></button></div></div>
+                  <div id="transcript-rows" class="card rows"></div>
+                  <div class="row" style="margin-top:12px"><button id="transcript-more" class="btn" type="button" data-i18n="action.more" hidden></button></div>
+                </div>
+
+                <div data-note-panel="translate" role="tabpanel" hidden>
+                  <p class="small muted" data-i18n="translate.help"></p>
+                  <div class="toolbar" style="margin-top:12px"><div class="row grow"><select id="translate-target" class="grow" style="max-width:280px" data-i18n-attr="aria-label=translate.target"></select><button id="translate-load-options" class="icon-btn" type="button" data-i18n-attr="aria-label=translate.languages;title=translate.languages"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button><button id="translate-run" class="btn primary" type="button" data-i18n="translate.run"></button></div>
+                    <div class="row"><select id="translate-export-format" style="width:auto" data-i18n-attr="aria-label=note.exportFormat"><option value="txt">TXT</option><option value="markdown">Markdown</option><option value="srt">SRT</option><option value="docx">DOCX</option><option value="pdf">PDF</option></select><button id="translate-export" class="btn small" type="button" data-i18n="translate.export"></button><button id="translate-export-bilingual" class="btn small" type="button" data-i18n="translate.exportBilingual"></button></div></div>
+                  <div id="translate-output" class="stack"></div>
+                  <div class="row" style="margin-top:12px"><button id="translate-more" class="btn" type="button" data-i18n="action.more" hidden></button></div>
+                </div>
+
+                <div data-note-panel="organize" role="tabpanel" class="stack" hidden>
+                  <section class="card" aria-labelledby="tags-title">
+                    <div class="card-head"><h3 id="tags-title" data-i18n="tags.title"></h3><button id="tags-load" class="icon-btn" type="button" data-i18n-attr="aria-label=action.refresh;title=action.refresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div>
+                    <div id="tags-list" class="chips"></div>
+                    <div class="row" style="margin-top:12px"><button id="tags-save" class="btn primary small" type="button" data-i18n="tags.save"></button><input id="tag-new-name" type="text" class="grow" style="max-width:240px" maxlength="15" data-i18n-attr="placeholder=tags.newPlaceholder;aria-label=tags.new"><button id="tag-create" class="btn small" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span data-i18n="tags.create"></span></button></div>
+                    <details class="manage" style="margin-top:12px"><summary class="btn link small" data-i18n="tags.manage"></summary>
+                      <div class="stack" style="margin-top:8px"><div class="row"><select id="tag-definition" class="grow" style="max-width:240px" data-i18n-attr="aria-label=tags.definition"></select><input id="tag-edit-name" type="text" class="grow" style="max-width:240px" maxlength="15" data-i18n-attr="aria-label=tags.editName"><label class="check"><input id="tag-auto" type="checkbox"><span data-i18n="tags.auto"></span></label></div>
+                        <div class="row"><button id="tag-rename" class="btn small" type="button" data-i18n="tags.rename"></button><button id="tag-delete" class="btn small danger" type="button" data-i18n="tags.delete"></button></div></div>
+                    </details>
+                  </section>
+                  <section class="card" aria-labelledby="share-title">
+                    <div class="card-head"><div><h3 id="share-title" data-i18n="share.title"></h3><p class="small muted" data-i18n="share.help"></p></div><button id="share-refresh" class="icon-btn" type="button" data-i18n-attr="aria-label=action.refresh;title=action.refresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div>
+                    <div id="share-state"></div>
+                    <div class="row" style="margin-top:12px"><select id="share-access" style="width:auto" data-i18n-attr="aria-label=share.access"><option value="private" data-i18n="share.private"></option><option value="public" data-i18n="share.public"></option></select><input id="share-password" type="text" maxlength="16" autocomplete="off" style="width:9em" data-i18n-attr="placeholder=share.passwordPlaceholder;aria-label=share.passwordLabel" hidden><button id="share-save" class="btn primary small" type="button" data-i18n="share.save"></button><button id="share-password-clear" class="btn small" type="button" data-i18n="share.passwordClear" hidden></button><button id="share-copy" class="btn small" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span data-i18n="share.copy"></span></button></div>
+                  </section>
+                  <section class="card" aria-labelledby="replace-title">
+                    <div class="card-head"><div><h3 id="replace-title" data-i18n="replace.title"></h3><p class="small muted" data-i18n="replace.help"></p></div></div>
+                    <div class="row"><label class="field grow"><span data-i18n="replace.find"></span><input id="replace-find" type="text"></label><label class="field grow"><span data-i18n="replace.with"></span><input id="replace-with" type="text"></label></div>
+                    <div class="row" style="margin-top:12px"><button id="replace-preview" class="btn small" type="button" data-i18n="replace.preview"></button><button id="replace-save" class="btn primary small" type="button" data-i18n="replace.save"></button></div>
+                    <div id="replace-results" class="stack" style="margin-top:12px"></div>
+                  </section>
+                  <section id="speaker-card" class="card" aria-labelledby="speaker-title">
+                    <div class="card-head"><div><h3 id="speaker-title" data-i18n="speaker.title"></h3><p class="small muted" data-i18n="speaker.help"></p></div></div>
+                    <div class="row"><label class="field grow"><span data-i18n="speaker.from"></span><input id="speaker-from" type="text" maxlength="64"></label><label class="field grow"><span data-i18n="speaker.to"></span><input id="speaker-to" type="text" maxlength="64"></label></div>
+                    <div class="row" style="margin-top:12px"><button id="speaker-save" class="btn primary small" type="button" data-i18n="speaker.save"></button></div>
+                  </section>
+                </div>
+
+                <div data-note-panel="details" role="tabpanel" hidden>
+                  <div class="row" style="margin-bottom:12px"><button id="extras-keywords" class="btn small" type="button" data-i18n="extras.keywords"></button><button id="extras-todos" class="btn small" type="button" data-i18n="extras.todos"></button><button id="extras-info" class="btn small" type="button" data-i18n="extras.info"></button><button id="summary-mcp" class="btn small" type="button" data-i18n="details.cloudSummary"></button><button id="note-markers" class="btn small" type="button" data-i18n="markers.title"></button></div>
+                  <div id="extras-output" class="card"><p class="small muted" data-i18n="details.help"></p></div>
+                </div>
+              </article>
+            </section>
+          </div>
+        </section>
+
+        <section id="panel-memos" class="view" data-panel="memos" hidden>
+          <div class="page narrow">
+            <div class="page-head"><div><h2 data-i18n="memos.heading"></h2><p class="muted" data-i18n="memos.intro"></p></div></div>
+            <section class="card" aria-labelledby="recordings-title" style="margin-bottom:16px">
+              <div class="card-head"><div><h2 id="recordings-title" data-i18n="recordings.title"></h2><p class="small muted" data-i18n="recordings.help"></p></div>
+                <div class="row"><select id="recordings-source" style="width:auto" data-i18n-attr="aria-label=recordings.source"><option value="this" data-i18n="recordings.sourceThis"></option><option value="other" data-i18n="recordings.sourceOther"></option></select><button id="recordings-groups" class="btn small" type="button" data-i18n="groups.title"></button><select id="recordings-format" style="width:auto" data-i18n-attr="aria-label=recordings.format"><option value="ogg">OGG</option><option value="mp3">MP3</option><option value="wav">WAV</option></select><button id="recordings-load" class="btn small" type="button" data-i18n="action.load"></button></div></div>
+              <div id="groups-view" class="stack" hidden></div>
+              <div id="recordings-list" class="rows"></div>
+              <button id="recordings-more" class="btn small" type="button" data-i18n="action.more" hidden style="margin-top:8px"></button>
+            </section>
+            <div class="card-head" style="margin-top:8px"><h2 data-i18n="memos.listTitle"></h2><div class="row"><label class="field inline"><span data-i18n="memos.limit"></span><input id="memos-limit" type="number" min="1" max="100" value="20" inputmode="numeric"></label><button id="memos-load" class="btn" type="button" data-i18n="memos.load"></button></div></div>
+            <div id="memos-list" class="card rows"></div>
+          </div>
+        </section>
+
+        <section id="panel-assistant" class="view" data-panel="assistant" hidden>
+          <div id="assistant-host" class="assistant-host"></div>
+        </section>
+
+        <section id="panel-settings" class="view" data-panel="settings" hidden>
+          <div class="page narrow">
+            <div class="page-head"><div><h2 data-i18n="settings.heading"></h2><p class="muted" data-i18n="settings.intro"></p></div><button id="settings-refresh" class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span data-i18n="settings.refresh"></span></button></div>
+            <div id="settings-list" class="stack"></div>
+            <section class="card" aria-labelledby="alerts-title">
+              <div class="card-head"><div><h2 id="alerts-title" data-i18n="notification.title"></h2><p class="small muted" data-i18n="notification.help"></p></div></div>
+              <div class="setting-field"><label for="notification-method"><strong class="small" data-i18n="notification.method"></strong></label><select id="notification-method"></select></div>
+              <div class="setting-field"><label for="notification-org"><strong class="small" data-i18n="notification.organization"></strong><span id="notification-current" class="tiny muted" style="display:block"></span></label><div class="row"><select id="notification-org" class="grow"></select><button id="notification-load-orgs" class="icon-btn" type="button" data-i18n-attr="aria-label=notification.loadOrgs;title=notification.loadOrgs"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div></div>
+              <div class="setting-actions"><button id="notification-restore" class="btn small" type="button" data-i18n="action.restore"></button><button id="notification-save" class="btn primary small" type="button" data-i18n="settings.saveGroup"></button></div>
+            </section>
+            <section class="card" aria-labelledby="identity-title">
+              <div class="card-head"><div><h2 id="identity-title" data-i18n="identity.title"></h2><p class="small muted" data-i18n="identity.help"></p></div><div class="row"><button id="device-load" class="btn small" type="button" data-i18n="action.load"></button><button id="device-refresh" class="icon-btn" type="button" data-i18n-attr="aria-label=action.refresh;title=action.refresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div></div>
+              <div id="device-identity-view"></div>
+              <div class="row" style="margin-top:8px"><button id="device-info-load" class="btn small" type="button" data-i18n="deviceInfo.load"></button></div>
+              <div id="device-info-view"></div>
+              <div class="row" style="margin-top:12px"><label class="field grow"><span data-i18n="identity.newName"></span><input id="device-rename" type="text" maxlength="64"></label></div>
+              <div class="setting-actions"><button id="device-restore-name" class="btn small" type="button" data-i18n="action.restore"></button><button id="device-save-name" class="btn primary small" type="button" data-i18n="identity.rename"></button></div>
+            </section>
+            <section class="card" aria-labelledby="quotas-title">
+              <div class="card-head"><div><h2 id="quotas-title" data-i18n="quotas.title"></h2><p class="small muted" data-i18n="quotas.help"></p></div><button id="quotas-load" class="btn small" type="button" data-i18n="quotas.load"></button></div>
+              <div class="row"><select id="quota-org" class="grow" style="max-width:320px" data-i18n-attr="aria-label=quota.organization"><option value="" data-i18n="quota.personalDefault"></option></select><button id="quota-orgs" class="icon-btn" type="button" data-i18n-attr="aria-label=notification.loadOrgs;title=notification.loadOrgs"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button></div>
+              <div id="quotas-output" class="stack" style="margin-top:12px"></div>
+            </section>
+            <section class="card" aria-labelledby="account-title">
+              <div class="card-head"><div><h2 id="account-title" data-i18n="account.title"></h2><p class="small muted" data-i18n="account.help"></p></div><button id="account-load" class="btn small" type="button" data-i18n="action.load"></button></div>
+              <div id="account-view" class="stack"></div>
+            </section>
+            <section class="card" aria-labelledby="mcp-access-title">
+              <div class="card-head"><div><h2 id="mcp-access-title" data-i18n="mcpAccess.title"></h2><p class="small muted" data-i18n="mcpAccess.help"></p></div></div>
+              <div id="mcp-access-view"></div>
+              <div class="row" style="margin-top:12px"><button id="mcp-grant-write" class="btn primary small" type="button" data-i18n="mcpAccess.grantWrite"></button><button id="mcp-renew-read" class="btn small" type="button" data-i18n="mcpAccess.renewRead"></button></div>
+              <p id="mcp-access-state" class="small muted"></p>
+              <div class="row" style="margin-top:8px"><label class="field grow"><span data-i18n="mcpAccess.paste"></span><input id="mcp-paste" type="text" autocomplete="off"></label><button id="mcp-finish" class="btn small" type="button" style="align-self:flex-end" data-i18n="mcpAccess.finish"></button></div>
+            </section>
+            <section class="card" aria-labelledby="note-path-title">
+              <div class="card-head"><div><h2 id="note-path-title" data-i18n="notePath.title"></h2><p class="small muted" data-i18n="notePath.help"></p></div></div>
+              <div class="setting-field"><label for="note-path"><strong class="small" data-i18n="notePath.label"></strong></label><select id="note-path"><option value="application" data-i18n="notePath.application"></option><option value="mcp" data-i18n="notePath.mcp"></option></select></div>
+              <p id="note-path-state" class="small muted"></p>
+            </section>
+            <section class="card" aria-labelledby="hotwords-title">
+              <div class="card-head"><div><h2 id="hotwords-title" data-i18n="hotwords.title"></h2><p class="small muted" data-i18n="hotwords.help"></p></div><button id="hotwords-load" class="btn small" type="button" data-i18n="action.load"></button></div>
+              <div id="hotwords-list" class="row"></div>
+              <div id="hotwords-add-row" class="row" style="margin-top:12px" hidden><label class="field grow"><span data-i18n="hotwords.new"></span><input id="hotwords-new" type="text" maxlength="400"></label><button id="hotwords-add" class="btn primary small" type="button" style="align-self:flex-end" data-i18n="hotwords.add"></button></div>
+            </section>
+            <section class="card" aria-labelledby="display-title">
+              <div class="card-head"><h2 id="display-title" data-i18n="settings.group.display"></h2></div>
+              <div class="setting-field"><label for="locale-select"><strong class="small" data-i18n="app.language"></strong></label><select id="locale-select"><option value="en">English</option><option value="zh-CN">简体中文</option></select></div>
+              <div class="setting-field"><label for="theme-select"><strong class="small" data-i18n="app.theme"></strong></label><select id="theme-select"><option value="system" data-i18n="theme.system"></option><option value="light" data-i18n="theme.light"></option><option value="dark" data-i18n="theme.dark"></option></select></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="panel-dev" class="view" data-panel="dev" hidden>
+          <div class="page">
+            <div class="page-head"><div><h2 data-i18n="dev.heading"></h2><p class="muted" data-i18n="dev.intro"></p></div><div class="row"><label class="switch"><input id="protocol-keys" type="checkbox" role="switch"><span data-i18n="dev.protocolKeys"></span></label><button id="dev-reconnect" class="btn small" type="button" data-i18n="dev.reconnect"></button><button id="dev-refresh" class="btn small" type="button" data-i18n="action.refresh"></button></div></div>
+            <div class="dev-grid">
+              <section class="card" aria-labelledby="timings-title"><div class="card-head"><div><h2 id="timings-title" data-i18n="dev.timings"></h2><p class="small muted" data-i18n="dev.timingsHelp"></p></div></div><div id="timing-list"></div></section>
+              <section class="card" aria-labelledby="credentials-title"><div class="card-head"><div><h2 id="credentials-title" data-i18n="credentials.title"></h2><p class="small muted" data-i18n="credentials.help"></p></div></div><div id="credential-list" class="rows"></div></section>
+              <section class="card" aria-labelledby="rtc-title">
+                <div class="card-head"><div><h2 id="rtc-title" data-i18n="rtc.title"></h2><p class="small muted" data-i18n="rtc.intro"></p></div><span id="rtc-badge" class="badge"></span></div>
+                <div class="row"><label class="field inline"><span data-i18n="rtc.seconds"></span><input id="rtc-seconds" type="number" min="1" max="45" value="20" inputmode="numeric"></label><label class="check"><input id="rtc-audio" type="checkbox"><span data-i18n="rtc.receiveAudio"></span></label></div>
+                <div class="notice warn" style="margin-top:12px" data-i18n="rtc.warning"></div>
+                <div class="row" style="margin-top:12px"><button id="rtc-begin" class="btn" type="button" data-i18n="rtc.start"></button><button id="rtc-end" class="btn danger" type="button" data-i18n="rtc.stop"></button><span id="rtc-state" class="small muted"></span></div>
+                <div id="rtc-result" style="margin-top:12px"></div>
+                <div class="row" style="margin-top:12px"><select id="rtc-scene" class="grow" style="max-width:260px" data-i18n-attr="aria-label=rtc.scene"><option value="a1_transcribe" data-i18n="rtc.sceneTranscribe"></option><option value="a1_face2face" data-i18n="rtc.sceneFace"></option></select><button id="rtc-load-options" class="btn small" type="button" data-i18n="rtc.options"></button></div>
+                <div id="rtc-options" class="rows" style="margin-top:8px"></div>
+              </section>
+              <section class="card" aria-labelledby="danger-title">
+                <div class="card-head"><div><h2 id="danger-title" data-i18n="danger.title"></h2><p class="small muted" data-i18n="danger.help"></p></div></div>
+                <label class="switch"><input id="danger-switch" type="checkbox" role="switch"><span data-i18n="danger.switch"></span></label>
+                <div class="row" style="margin-top:12px"><button id="device-unbind" class="btn danger small" type="button" data-i18n="danger.unbind" disabled></button><button id="ble-pairing" class="btn small" type="button" data-i18n="ble.download" disabled></button></div>
+                <p class="tiny muted" data-i18n="ble.help"></p>
+                <p class="tiny muted" style="margin-top:12px" data-i18n="danger.appOnly"></p>
+              </section>
+              <section class="card" aria-labelledby="cache-title"><div class="card-head"><div><h2 id="cache-title" data-i18n="cache.title"></h2><p class="small muted" data-i18n="cache.help"></p></div><button id="cache-clear" class="btn small" type="button" data-i18n="cache.clear"></button></div><div id="cache-view"></div></section>
+              <section class="card" aria-labelledby="task-title"><div class="card-head"><div><h2 id="task-title" data-i18n="task.title"></h2><p class="small muted" data-i18n="task.help"></p></div><button id="task-refresh" class="btn small" type="button" data-i18n="task.refresh"></button></div><div id="task-view"></div></section>
+              <section class="card" aria-labelledby="capture-title"><div class="card-head"><div><h2 id="capture-title" data-i18n="capture.title"></h2><p class="small muted" data-i18n="capture.help"></p></div></div><div class="row"><label class="field inline"><span data-i18n="capture.seconds"></span><input id="capture-seconds" type="number" min="1" max="300" value="120" inputmode="numeric"></label><button id="capture-start" class="btn primary small" type="button" data-i18n="capture.start"></button><button id="capture-stop" class="btn danger small" type="button" data-i18n="capture.stop"></button></div><div id="capture-view" style="margin-top:12px"></div></section>
+              <section class="card wide" aria-labelledby="raw-settings-title"><div class="card-head"><div><h2 id="raw-settings-title" data-i18n="dev.rawSettings"></h2><p class="small muted" data-i18n="dev.rawSettingsHelp"></p></div></div><div id="settings-raw" class="table-wrap"></div></section>
+              <section class="card wide" aria-labelledby="events-title"><div class="card-head"><h2 id="events-title" data-i18n="events.title"></h2></div><div id="event-list" class="rows"></div></section>
+              <section class="card wide" aria-labelledby="mcp-title"><div class="card-head"><div><h2 id="mcp-title" data-i18n="mcp.title"></h2><p class="small muted" data-i18n="mcp.help"></p></div></div>
+                <div class="row"><label class="field grow" style="max-width:320px"><span data-i18n="mcp.tool"></span><select id="mcp-tool"></select></label><button id="mcp-run" class="btn primary small" type="button" style="align-self:flex-end" data-i18n="mcp.run"></button></div>
+                <label class="field" style="margin-top:12px"><span data-i18n="mcp.arguments"></span><textarea id="mcp-args" class="mono" rows="4">{}</textarea></label>
+                <pre id="mcp-result" class="code" style="margin-top:12px" hidden></pre></section>
+            </div>
+          </div>
+        </section>
+      </main>
+      <div id="companion-dock" class="companion-dock" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div id="control-dock" class="control-dock" role="group" data-i18n-attr="aria-label=recording.controls">
+  <span id="dock-state" class="dock-state"><i id="dock-dot" class="dot"></i><span id="dock-state-text"></span></span>
+  <div class="dock-buttons">
+    <button id="arm-button" class="btn primary" type="button" data-i18n="recording.arm"></button>
+    <button id="disarm-button" class="btn ghost" type="button" data-i18n="recording.disarm"></button>
+    <button id="record-start" class="btn danger" type="button" data-i18n="recording.start"></button>
+    <button id="record-pause" class="btn" type="button" data-i18n="recording.pause"></button>
+    <button id="record-resume" class="btn primary" type="button" data-i18n="recording.resume"></button>
+    <button id="record-stop" class="btn danger" type="button" data-i18n="recording.stop"></button>
+    <button id="record-confirm" class="btn primary" type="button" data-i18n="recording.confirm"></button>
+  </div>
+</div>
+
+<aside id="companion" class="companion" aria-labelledby="companion-title">
+  <header class="companion-head">
+    <svg class="icon brand" aria-hidden="true"><use href="#i-spark"/></svg>
+    <h2 id="companion-title" data-i18n="tab.assistant"></h2>
+    <select id="assistant-provider" data-i18n-attr="aria-label=assistant.provider"><option value="builtin" data-i18n="assistant.builtin"></option><option value="custom" data-i18n="assistant.custom"></option></select>
+    <button id="assistant-conversations" class="icon-btn" type="button" aria-pressed="false" data-i18n-attr="aria-label=assistant.conversations;title=assistant.conversations"><svg class="icon" aria-hidden="true"><use href="#i-history"/></svg></button>
+    <button id="assistant-new" class="icon-btn" type="button" data-i18n-attr="aria-label=assistant.new;title=assistant.new"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>
+    <button id="companion-expand" class="icon-btn" type="button" data-i18n-attr="aria-label=assistant.expand;title=assistant.expand"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></button>
+    <button id="companion-close" class="icon-btn" type="button" data-i18n-attr="aria-label=app.closePanel;title=app.closePanel"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+  </header>
+  <div id="assistant-conversation-list" class="conversation-list" hidden></div>
+  <div id="assistant-thread" class="thread" aria-live="polite"></div>
+  <div class="companion-tools"><button id="assistant-history" class="btn ghost small" type="button" data-i18n="assistant.history"></button><button id="assistant-recover" class="btn ghost small" type="button" data-i18n="assistant.recover"></button><span id="assistant-route" class="tiny muted grow"></span></div>
+  <form id="assistant-form" class="composer">
+    <label id="assistant-context-wrap" class="check small"><input id="assistant-context" type="checkbox"><span id="assistant-note"></span></label>
+    <p id="assistant-note-size" class="tiny muted" hidden></p>
+    <textarea id="assistant-input" maxlength="32000" rows="3" enterkeyhint="send" data-i18n-attr="placeholder=assistant.prompt;aria-label=assistant.draft"></textarea>
+    <div class="composer-foot"><span id="assistant-count" class="tiny muted numeric"></span><div class="row"><button id="assistant-cancel" class="btn danger small" type="button" data-i18n="assistant.cancel" hidden></button><button id="assistant-send" class="btn primary small" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg><span data-i18n="assistant.send"></span></button></div></div>
+    <p class="tiny muted" data-i18n="assistant.privacy"></p>
+  </form>
+</aside>
+
+<div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
+<dialog id="typed-dialog" aria-labelledby="typed-title"><form id="typed-form"><div class="dialog-body"><h2 id="typed-title"></h2><p id="typed-text" class="muted"></p><label class="field"><span id="typed-label"></span><input id="typed-input" type="text" autocomplete="off"></label></div><div class="dialog-actions"><button id="typed-cancel" class="btn" type="button" data-i18n="action.cancel"></button><button id="typed-ok" class="btn danger" type="submit" data-i18n="action.confirm"></button></div></form></dialog>
+<dialog id="confirm-dialog" aria-labelledby="confirm-title"><div class="dialog-body"><h2 id="confirm-title"></h2><p id="confirm-text" class="muted"></p></div><div class="dialog-actions"><button id="confirm-cancel" class="btn" type="button" data-i18n="action.cancel"></button><button id="confirm-ok" class="btn primary" type="button" data-i18n="action.confirm"></button></div></dialog>
+<script nonce="__NONCE__">
+'use strict';
+(() => {
+const CSRF='__CSRF__';
+const CATALOGS=__I18N__;
+const VIEWS=['live','notes','memos','assistant','settings','dev'];
+const SVG_NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const clear=node=>node.replaceChildren();
+
+// Element builder. Text always goes through textContent; there is no HTML parsing.
+const h=(tag,attrs={},children=[])=>{
+  if(Array.isArray(attrs)||attrs instanceof Node){children=attrs;attrs={};}
+  const node=document.createElement(tag);
+  for(const [key,value] of Object.entries(attrs)){
+    if(value===null||value===undefined||value===false)continue;
+    if(key==='class')node.className=value;
+    else if(key==='text')node.textContent=String(value);
+    else if(key==='dataset')Object.assign(node.dataset,value);
+    else if(key==='checked'||key==='disabled'||key==='hidden'||key==='selected')node[key]=Boolean(value);
+    else if(key==='value')node.value=value;
+    else if(key.startsWith('on'))node.addEventListener(key.slice(2),value);
+    else node.setAttribute(key,value===true?'':String(value));
+  }
+  for(const child of Array.isArray(children)?children:[children]){
+    if(child===null||child===undefined||child===false)continue;
+    node.append(child instanceof Node?child:document.createTextNode(String(child)));
+  }
+  return node;
+};
+function icon(name){
+  const svg=document.createElementNS(SVG_NS,'svg');svg.setAttribute('class','icon');svg.setAttribute('aria-hidden','true');
+  const use=document.createElementNS(SVG_NS,'use');use.setAttribute('href','#i-'+name);svg.append(use);return svg;
+}
+const prefs={
+  get(key,fallback){try{return localStorage.getItem('qn.'+key)??fallback;}catch{return fallback;}},
+  set(key,value){try{localStorage.setItem('qn.'+key,value);}catch{}}
+};
+
+// Locale and catalogs ------------------------------------------------------------
+let locale=prefs.get('locale','')||((navigator.language||'').toLowerCase().startsWith('zh')?'zh-CN':'en');
+if(!CATALOGS[locale])locale='en';
+const catalog=()=>CATALOGS[locale]||CATALOGS.en;
+function t(key,vars={},count){
+  vars={...vars};if(count!==undefined&&vars.count===undefined)vars.count=count;
+  let value=catalog().ui[key]??CATALOGS.en.ui[key]??key;
+  if(value&&typeof value==='object'){
+    const rule=new Intl.PluralRules(locale,{type:'cardinal'}).select(Number(count??0));
+    value=value[rule]??value.other??Object.values(value)[0];
+  }
+  return String(value).replace(/\{(\w+)\}/g,(_,name)=>vars[name]===undefined?'{'+name+'}':String(vars[name]));
+}
+const has=key=>key in CATALOGS.en.ui;
+function serverText(message){return (catalog().server||{})[message]||(CATALOGS.en.server||{})[message]||message;}
+function applyStatic(){
+  document.documentElement.lang=locale;
+  document.querySelectorAll('[data-i18n]').forEach(node=>{node.textContent=t(node.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-attr]').forEach(node=>{
+    for(const pair of node.dataset.i18nAttr.split(';')){const [attr,key]=pair.split('=');if(attr&&key)node.setAttribute(attr,t(key));}
+  });
+  $('locale-select').value=locale;document.title=t('app.title');$('view-title').textContent=t('tab.'+state.view);
+}
+
+const fmt={
+  number:value=>new Intl.NumberFormat(locale).format(Number(value)||0),
+  time:value=>{
+    if(!value)return t('value.notReported');
+    const ms=Number(value)<100000000000?Number(value)*1000:Number(value);
+    return new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(new Date(ms));
+  },
+  duration:value=>{
+    if(!Number.isFinite(Number(value)))return t('value.unknown');
+    return fmt.clock(Math.round(Number(value)/1000));
+  },
+  ago:value=>{
+    const seconds=Math.max(0,Date.now()/1000-Number(value));
+    if(seconds<10)return t('time.justNow');
+    const relative=new Intl.RelativeTimeFormat(locale,{numeric:'auto'});
+    if(seconds<60)return relative.format(-Math.floor(seconds/10)*10,'second');
+    if(seconds<3600)return relative.format(-Math.floor(seconds/60),'minute');
+    if(seconds<86400)return relative.format(-Math.floor(seconds/3600),'hour');
+    return relative.format(-Math.floor(seconds/86400),'day');
+  },
+  clock:seconds=>{
+    seconds=Math.max(0,Math.floor(seconds));const hh=Math.floor(seconds/3600),mm=Math.floor(seconds%3600/60),ss=seconds%60;
+    return (hh?hh+':'+String(mm).padStart(2,'0'):String(mm))+':'+String(ss).padStart(2,'0');
+  },
+  bytes:value=>{
+    if(value===null||value===undefined||!Number.isFinite(Number(value)))return t('value.notReported');
+    let n=Number(value),unit=0;const units=['B','KB','MB','GB','TB'];
+    while(Math.abs(n)>=1024&&unit<units.length-1){n/=1024;unit++;}
+    return `${new Intl.NumberFormat(locale,{maximumFractionDigits:unit?1:0}).format(n)} ${units[unit]}`;
+  }
+};
+
+// State ---------------------------------------------------------------------------
+const state={
+  status:null,settingsRevision:null,catalog:{details:[],choices:{}},cursor:0,events:[],
+  view:'live',signatures:{},protocol:prefs.get('protocol','0')==='1',
+  notes:[],notesLoaded:false,notesLoading:false,notesToken:null,noteFilter:'',
+  selected:null,noteTab:'summary',summaryText:null,summaryRevision:null,editingSummary:false,
+  transcriptRows:[],transcriptToken:null,translateToken:null,translateTargetsLoaded:false,
+  tags:null,share:null,replacement:null,organizeLoaded:false,
+  device:null,quotaOrganizations:[],memosLoaded:false,settingsDirty:new Set(),
+  assistant:{busy:false,request:null,finishedAt:0,messages:[],route:'',showConversations:false,size:null},
+  companionOpen:false,failures:0,sessionExpired:false,pending:new Set(),
+  notesSavedAt:null,noteSavedAt:null
+};
+let lastDeviceState=null;  // the last device-check state seen, for announceDevice()
+// A region repaints only when the data it shows has changed (see poll()).
+function changed(region,value){
+  const signature=JSON.stringify(value)+'|'+locale+'|'+state.protocol;
+  if(state.signatures[region]===signature)return false;
+  state.signatures[region]=signature;return true;
+}
+
+// Small views ---------------------------------------------------------------------
+function badge(text,kind=''){return h('span',{class:`badge ${kind}`.trim(),text});}
+function empty(title,body,iconName='notes'){
+  return h('div',{class:'placeholder'},h('div',[icon(iconName),h('strong',{text:t(title)}),h('span',{text:t(body)})]));
+}
+function skeleton(lines=3){const wrap=h('div',{'aria-busy':'true','aria-label':t('state.loading')});for(let i=0;i<lines;i++)wrap.append(h('div',{class:i===lines-1?'skeleton short':'skeleton'}));return wrap;}
+function facts(entries){
+  const list=h('dl',{class:'facts'});
+  for(const [label,value] of entries){
+    if(value===undefined)continue;
+    list.append(h('dt',{text:label}),h('dd',{text:value===null||value===''?t('value.notReported'):String(value)}));
+  }
+  return list;
+}
+function codeView(value){return h('pre',{class:'code',text:JSON.stringify(value,null,2)});}
+// Summaries and replies are Markdown. This renders the common subset as DOM nodes
+// (headings, lists, rules, bold, italic, code); anything else stays plain text.
+function inlineMarkdown(text){
+  const nodes=[];let last=0;
+  for(const match of text.matchAll(/\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\s][^*]*)\*/g)){
+    if(match.index>last)nodes.push(text.slice(last,match.index));
+    if(match[1]!==undefined)nodes.push(h('strong',{text:match[1]}));
+    else if(match[2]!==undefined)nodes.push(h('code',{text:match[2]}));
+    else nodes.push(h('em',{text:match[3]}));
+    last=match.index+match[0].length;
+  }
+  if(last<text.length)nodes.push(text.slice(last));
+  return nodes;
+}
+function markdown(text){
+  const root=h('div',{class:'markdown'});let list=null,paragraph=[];
+  const flush=()=>{if(paragraph.length){root.append(h('p',{},inlineMarkdown(paragraph.join(' '))));paragraph=[];}};
+  for(const raw of String(text??'').split('\n')){
+    const line=raw.trimEnd();
+    const heading=/^(#{1,6})\s+(.*)$/.exec(line),bullet=/^\s*[-*+]\s+(.*)$/.exec(line),numbered=/^\s*\d+[.)]\s+(.*)$/.exec(line);
+    if(!line.trim()){flush();list=null;continue;}
+    if(/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)){flush();list=null;root.append(h('hr'));continue;}
+    // Markdown headings start at h3: the page and the note title use h1 and h2.
+    if(heading){flush();list=null;root.append(h('h'+Math.min(6,heading[1].length+2),{},inlineMarkdown(heading[2])));continue;}
+    if(bullet||numbered){
+      flush();const tag=bullet?'ul':'ol';
+      if(!list||list.tagName.toLowerCase()!==tag){list=h(tag);root.append(list);}
+      list.append(h('li',{},inlineMarkdown((bullet||numbered)[1])));continue;
+    }
+    list=null;paragraph.push(line.trim());
+  }
+  flush();return root;
+}
+function errorText(error){
+  if(error?.code&&has('err.'+error.code))return serverText(error.message)||t('err.'+error.code);
+  return error?.message||t('err.failed');
+}
+function toast(message,kind='info'){
+  const close=h('button',{type:'button','aria-label':t('action.dismiss'),text:'×'});
+  const node=h('div',{class:`toast ${kind==='error'?'error':''}`,role:kind==='error'?'alert':'status'},[h('p',{text:message}),close]);
+  close.addEventListener('click',()=>node.remove());$('toast-region').append(node);
+  setTimeout(()=>node.remove(),kind==='error'?9000:4500);
+}
+let confirmResolve=null;
+function ask(title,text,ok='action.confirm',danger=false,vars={}){
+  if(confirmResolve)confirmResolve(false);
+  $('confirm-title').textContent=t(title);$('confirm-text').textContent=t(text,vars);
+  $('confirm-ok').textContent=t(ok);$('confirm-ok').className=`btn ${danger?'danger':'primary'}`;
+  $('confirm-dialog').showModal();
+  return new Promise(resolve=>{confirmResolve=resolve;});
+}
+function settleConfirm(value){
+  if(!$('confirm-dialog').open)return;$('confirm-dialog').close();
+  const resolve=confirmResolve;confirmResolve=null;if(resolve)resolve(value);
+}
+
+// Requests ------------------------------------------------------------------------
+// The server keeps cloud reads for a day (option lists for a week). Automatic loads use
+// that saved copy; reload buttons run inside fresh(), which asks the cloud again.
+let freshDepth=0;
+async function fresh(load,...args){freshDepth++;try{return await load(...args);}finally{freshDepth--;}}
+const clickedOnce=new Set();
+function loadThenReload(id,load){return ()=>{const again=clickedOnce.has(id);clickedOnce.add(id);return again?fresh(load):load();};}
+function noteSaved(body,savedAt){
+  if(!body.task_uuid||state.selected?.uuid!==body.task_uuid)return;
+  state.noteSavedAt=savedAt?Math.min(state.noteSavedAt??savedAt,savedAt):state.noteSavedAt;renderSelectedNote();
+}
+async function api(action,body={},options={}){
+  if(freshDepth>0)body={...body,refresh:true};
+  const response=await fetch('/api/'+action,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF},body:JSON.stringify(body)});
+  if(response.status===403){state.sessionExpired=true;const denied=new Error(t('err.session'));denied.code='session';throw denied;}
+  if(response.status===404){const missing=new Error(t('err.restartNeeded'));missing.code='restart';throw missing;}
+  if(!response.ok){
+    let error;try{error=await response.json();}catch{error={message:t('err.failed')};}
+    const thrown=new Error(errorText(error));thrown.code=error.code;throw thrown;
+  }
+  if(options.download)return response;
+  const savedAt=Number(response.headers.get('X-Cached-At'))||null;
+  if(action==='documents'&&body.tool==='list_my_minutes'&&!body.arguments?.nextToken)state.notesSavedAt=savedAt;
+  noteSaved(body,savedAt);
+  return (response.headers.get('Content-Type')||'').includes('application/json')?response.json():response;
+}
+// One request per action at a time from this page; the backend queues the rest.
+// poll: 'await' waits for fresh status, false skips it, anything else schedules one.
+async function run(action,body={},options={}){
+  if(state.pending.has(action))return null;
+  state.pending.add(action);paintBusy();
+  const button=options.button;
+  if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+  try{
+    const result=await api(action,body,options);
+    if(options.success)toast(t(options.success));
+    if(options.poll==='await')await poll(true);else if(options.poll!==false)schedulePoll();
+    return result;
+  }catch(error){toast(errorText(error),'error');return null;}
+  finally{
+    state.pending.delete(action);
+    if(button){button.disabled=false;button.removeAttribute('aria-busy');}
+    paintBusy();
+  }
+}
+function paintBusy(){paintRecording();paintCompanionControls();}
+
+let polling=false,pollAgain=false,lastPoll=0,pollTimer=null;
+function schedulePoll(delay=150){clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll(true),delay);}
+async function poll(force=false){
+  const now=Date.now();
+  if(state.sessionExpired)return;
+  // A refresh asked for during a poll runs after it, so the newest state always arrives.
+  if(polling){if(force)pollAgain=true;return;}
+  if(!force&&document.hidden&&now-lastPoll<10000)return;
+  if(!force&&state.failures&&now-lastPoll<Math.min(30000,2000*2**state.failures))return;
+  polling=true;lastPoll=now;
+  try{
+    const params=new URLSearchParams();
+    if(state.cursor)params.set('since',state.cursor);
+    // The settings catalog is most of the payload; it is sent again only when it changes.
+    if(state.settingsRevision)params.set('settings_revision',state.settingsRevision);
+    const query=params.toString();
+    const response=await fetch('/api/status'+(query?'?'+query:''),{headers:{'Accept':'application/json'}});
+    if(response.status===403){state.sessionExpired=true;paintConnection();toast(t('err.session'),'error');return;}
+    if(!response.ok)throw new Error(t('err.failed'));
+    const data=await response.json();
+    if(data.setting_details)state.catalog={details:data.setting_details,choices:data.setting_choices||{}};
+    state.settingsRevision=data.settings_revision||null;
+    const announce=Boolean(state.cursor);
+    if(!announce)lastDeviceState=data.device_check?.state||null;
+    state.status=data;state.cursor=data.event_cursor||state.cursor;
+    state.events.push(...(data.events||[]));state.events=state.events.slice(-256);
+    for(const event of data.events||[]){
+      if(announce&&event.kind==='device-check')announceDevice(event.data||{});
+      if(announce&&event.kind==='note-status')noteStatusChanged(event.data||{});
+    }
+    state.failures=0;paintStatus();
+  }catch{state.failures++;paintConnection();}
+  finally{polling=false;if(pollAgain){pollAgain=false;schedulePoll(0);}}
+}
+// A change the console did not cause gets a notice: the A2 stopped or started on its own, or went offline.
+function announceDevice(data){
+  const previous=lastDeviceState;lastDeviceState=data.state;
+  const record=state.status?.record_state||{},recent=record.phase==='acknowledged'&&Date.now()/1000-(record.at||0)<30;
+  if(data.state==='offline'&&previous!=='offline')toast(t('device.wentOffline'),'error');
+  else if(data.state==='idle'&&['recording','paused'].includes(previous)&&!recent)toast(t('device.recordingEnded'));
+  else if(data.state==='recording'&&previous==='idle'&&!recent)toast(t('device.recordingStarted'));
+}
+function paintStatus(){
+  paintConnection();paintRecording();paintLive();paintHome();paintCompanionControls();paintMcpControls();paintDanger();paintMcpAccess();
+  if(state.view==='settings')paintSettings();
+  if(state.view==='dev')paintDev();
+}
+
+// Shell ---------------------------------------------------------------------------
+function paintConnection(){
+  const s=state.status,chip=$('connection-chip'),dot=$('connection-dot');
+  let label,kind='';
+  if(state.sessionExpired){label=t('err.session');kind='warn';}
+  else if(state.failures>=3){label=t('state.offline');kind='warn';}
+  else if(!s){label=t('link.connecting');}
+  else{label=t('link.'+(s.connection||'connecting'));kind=s.connection==='connected'?'ok':s.connection==='needs-attention'?'warn':'';}
+  // The "synced" tooltip shows minutes, so it changes at most once a minute.
+  if(!changed('connection',[label,kind,s?.connection,s?.worker_running,state.pending.has('reconnect'),Math.floor((s?.server_time||0)/60)]))return;
+  $('connection-label').textContent=label;dot.className=`dot ${kind}`.trim();
+  chip.title=s?t('state.synced',{time:fmt.time(s.server_time)}):label;chip.setAttribute('aria-label',label);
+  $('topbar-reconnect').hidden=!(s&&s.connection==='needs-attention'&&!s.worker_running);
+  $('dev-reconnect').disabled=Boolean(s?.worker_running)||state.pending.has('reconnect');
+}
+function showView(view){
+  if(!VIEWS.includes(view))view='live';
+  state.view=view;
+  document.querySelectorAll('[data-panel]').forEach(node=>{node.hidden=node.dataset.panel!==view;});
+  document.querySelectorAll('[data-view]').forEach(node=>{if(node.dataset.view===view)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
+  $('view-title').textContent=t('tab.'+view);
+  if(location.hash!=='#'+view)history.replaceState(null,'','#'+view);
+  placeDock();placeCompanion();
+  if(view==='notes'&&!state.notesLoaded&&!state.notesLoading)loadNotes(false);
+  if(view==='memos'&&!state.memosLoaded)loadMemos();
+  if(view==='settings')paintSettings(true);
+  if(view==='dev')paintDev(true);
+}
+function viewFromHash(){const hash=location.hash.slice(1);return hash==='ai_assistant'?'assistant':hash||'live';}
+// The recorder controls are one set of buttons: large on Home, compact in the top bar elsewhere.
+function placeDock(){const slot=state.view==='live'?$('dock-slot-home'):$('dock-slot-top');if($('control-dock').parentElement!==slot)slot.append($('control-dock'));}
+// The assistant is one component: full width on its own view, a side panel everywhere else.
+function placeCompanion(){
+  const companion=$('companion');
+  if(state.view==='assistant'){if(companion.parentElement!==$('assistant-host'))$('assistant-host').append(companion);$('companion-dock').hidden=true;}
+  else{if(companion.parentElement!==$('companion-dock'))$('companion-dock').append(companion);$('companion-dock').hidden=!state.companionOpen;}
+  $('companion-toggle').setAttribute('aria-expanded',String(state.view==='assistant'||state.companionOpen));
+  $('companion-close').hidden=state.view==='assistant';
+}
+function openCompanion(focus=true){if(state.view!=='assistant'){state.companionOpen=true;placeCompanion();}if(focus)$('assistant-input').focus();}
+function closeCompanion(){state.companionOpen=false;placeCompanion();}
+function toggleCompanion(){if(state.view==='assistant')return;if(state.companionOpen)closeCompanion();else openCompanion();}
+
+// Recorder ------------------------------------------------------------------------
+function armed(){const s=state.status;return Boolean(s&&s.ready_until>Date.now()/1000&&s.connection==='connected'&&!s.rtc?.active&&!s.rtc?.cleanup_pending);}
+// What the A2 is doing comes from the device check (online state plus its recording task),
+// except for the few seconds after a command, before the A2 reports the result.
+function recorderView(){
+  const s=state.status||{},own=Boolean(s.own_test),record=s.record_state||{},check=s.device_check||{},ready=armed();
+  if(s.rtc?.active||s.rtc?.stopping){
+    const kind=s.rtc.stopping?'stopping':'live';
+    return {kind,label:t('recording.short.'+kind),own:true,action:record.action,phase:record.phase,ready,record,check};
+  }
+  const phase=record.phase||'idle',action=record.action;
+  let kind;
+  if(phase==='pending')kind='pending';
+  else if(phase==='acknowledged')kind={start:'recording',resume:'recording',pause:'paused',stop:'stopping'}[action]||'unknown';
+  else if(phase==='checked')kind=action;
+  else if(own)kind='unknown';
+  else kind=check.state==='offline'?'offline':'idle';
+  if(kind==='idle'&&own)kind='unknown';
+  if(kind==='idle'&&ready)kind='armed';
+  const label=t('recording.short.'+(has('recording.short.'+kind)?kind:'unknown'));
+  return {kind,label,own,action,phase,ready,record,check};
+}
+function paintRecording(){
+  const s=state.status;if(!s)return;
+  const commandBusy=state.pending.has('record');
+  const view=recorderView(),{kind,own,ready,check}=view;
+  paintRecorderTimer(view);paintDeviceCheck(check);
+  if(!changed('recorder',[kind,own,ready,s.connection,s.rtc?.active,s.rtc?.cleanup_pending,commandBusy]))return;
+  const live=['recording','paused','stopping','unknown','pending','live'].includes(kind)&&own;
+  $('record-live-row').hidden=!liveAvailable();$('record-live').disabled=own||kind==='live';
+  if(changed('record-live-pref',[prefs.get('recordLive','0'),liveAvailable()]))$('record-live').checked=liveWanted();
+  $('arm-button').hidden=ready||own;$('arm-button').disabled=ready||s.connection!=='connected';
+  $('disarm-button').hidden=!ready||own;$('disarm-button').disabled=!ready;
+  $('record-start').hidden=!ready||own;$('record-start').disabled=commandBusy||!ready||own||Boolean(s.rtc?.active)||Boolean(s.rtc?.cleanup_pending);
+  $('record-pause').hidden=!own||kind!=='recording';$('record-pause').disabled=commandBusy||!ready;
+  $('record-resume').hidden=!own||kind!=='paused';$('record-resume').disabled=commandBusy||!ready;
+  $('record-stop').hidden=!live||kind==='stopping';$('record-stop').disabled=commandBusy||state.pending.has('rtc-stop');
+  $('record-confirm').hidden=!own||!['stopping','unknown'].includes(kind);$('record-confirm').disabled=commandBusy;
+  const dotKind={recording:'rec',live:'rec',paused:'warn',pending:'warn',stopping:'warn',unknown:'warn',offline:'',armed:'ok'}[kind]||'';
+  $('dock-state-text').textContent=view.label;$('dock-state').className=`dock-state ${['recording','live'].includes(kind)?'rec':''}`.trim();
+  $('dock-dot').className=`dot ${dotKind}`.trim();$('record-dot').className=`dot ${dotKind}`.trim();
+  $('record-state-text').textContent=view.label;
+  $('readiness-label').textContent=s.ready_until>Date.now()/1000?t('recording.armedForever'):t('recording.notArmed');
+  $('record-badge').hidden=true;
+}
+function paintDeviceCheck(check){
+  const parts=[];
+  if(check.in_progress||state.pending.has('device-check'))parts.push(t('device.checking'));
+  else parts.push(check.checked_at?t('device.checked',{ago:fmt.ago(check.checked_at)}):t('device.notChecked'));
+  if(Number.isFinite(check.battery_percent))parts.push(t('device.battery',{percent:check.battery_percent}));
+  const text=parts.join(' · ');if($('device-check-text').textContent!==text)$('device-check-text').textContent=text;
+  $('device-check').disabled=Boolean(check.in_progress)||state.status?.connection!=='connected';
+}
+// The elapsed time changes every second; the rest of the recorder only when its inputs change.
+function paintRecorderTimer(view){
+  // The cloud start time counts only when the task was read by the same device check.
+  const task=state.status?.record_task||{},check=view.check||{};
+  const cloud=['recording','paused'].includes(check.state)&&Math.abs((task.observed_at||0)-(check.checked_at||0))<5?Number(task.cloud_started_at_ms||0)/1000:0;
+  const live=view.kind==='live'?Number(state.status?.rtc?.started_at||0):0;
+  const started=live||cloud||(view.record.action==='start'?Number(view.record.at||0):0),timer=$('record-timer'),showTimer=['recording','live'].includes(view.kind)&&Boolean(started);
+  if(timer.hidden===showTimer)timer.hidden=!showTimer;
+  if(showTimer){const text=t('recording.elapsed',{time:fmt.clock(Date.now()/1000-started)});if(timer.textContent!==text)timer.textContent=text;}
+}
+// With Live transcript on, Start records the way the official app does for live text on a
+// 4G A2: a realtime transcription session that runs until Stop (at most 4 hours, or until
+// the session renews). Pause and resume are not part of that mode.
+// A backend from before the live mode allows only short (45 s) sessions; then Start records normally.
+function liveAvailable(){return (state.status?.rtc?.maximum_seconds||0)>=3600;}
+function liveWanted(){return liveAvailable()&&prefs.get('recordLive','0')==='1';}
+async function recordAction(action){
+  if(action==='stop'&&state.status?.rtc?.active)return run('rtc-stop',{}, {button:$('record-stop'),success:'recording.sent',poll:'await'});
+  if(action==='start'&&liveAvailable()&&$('record-live').checked)return run('rtc-start',{seconds:4*3600,receive_audio:false},{button:$('record-start'),success:'recording.liveStarted',poll:'await'});
+  return run('record',{action},{button:$('record-'+action),success:'recording.sent',poll:'await'});
+}
+// Device writes need armed controls. Instead of refusing, ask for readiness and then
+// continue with the write the user already asked for; cancelling the dialog drops it.
+let afterArming=null;
+function withReadiness(write){if(armed())return write();openReadiness(write);return null;}
+// One confirmation arms the controls until Disarm, also across restarts.
+async function openReadiness(next=null){
+  afterArming=next;
+  if(!await ask('ready.title','ready.intro','ready.submit')){afterArming=null;return;}
+  const result=await run('ready',{confirm:true},{button:$('arm-button'),success:'recording.armed',poll:'await'});
+  const write=afterArming;afterArming=null;if(result&&write)await write();
+}
+
+// Live transcript ------------------------------------------------------------------
+function transcriptRow(row,saved=false){
+  const when=saved?`${row.speaker||t('transcript.unknownSpeaker')} · ${fmt.duration(row.start_ms||0)}`
+                   :`${row.language||t('transcript.unknownLanguage')} · ${fmt.duration(row.start_ms||0)}`;
+  const text=row.content??row.text??row.stable_text??'';
+  const action=!saved&&row.final&&!row.translated
+    ?h('button',{class:'btn ghost small',type:'button',text:t('transcript.addDraft'),onclick:()=>addDraft(row.stable_text||row.text)}):h('span');
+  return h('div',{class:`transcript-row ${!saved&&!row.final?'provisional':''}`.trim()},[h('span',{class:'when',text:when}),h('p',{class:'text',text}),action]);
+}
+function paintLive(){
+  const snapshot=state.status?.transcript||{rows:[]},filter=$('live-filter').value;
+  if(!changed('live',[snapshot.revision,(snapshot.rows||[]).length,filter]))return;
+  const rows=(snapshot.rows||[]).filter(row=>filter==='all'||(filter==='original'?!row.translated:row.translated));
+  const target=$('live-rows');clear(target);
+  if(!rows.length)target.append(empty('live.emptyTitle','live.emptyBody','mic'));else rows.forEach(row=>target.append(transcriptRow(row)));
+  $('live-count').textContent=t('live.rowCount',{},rows.length);
+}
+
+// Home ----------------------------------------------------------------------------
+function paintHome(){
+  const s=state.status;
+  if(changed('home-notes',[state.notes.slice(0,5).map(note=>[note.uuid,note.title,note.gmtCreate]),state.notesLoading,state.notesLoaded])){
+    const target=$('home-notes');clear(target);
+    if(state.notesLoading&&!state.notes.length)target.append(skeleton(3));
+    else if(!state.notes.length)target.append(h('div',{class:'stack tight'},[h('p',{class:'small muted',text:t('home.recentEmpty')}),h('div',{},h('button',{class:'btn small',type:'button',text:t('notes.load'),onclick:()=>{showView('notes');}}))]));
+    else for(const note of state.notes.slice(0,5)){
+      target.append(h('button',{class:'recent-item',type:'button',onclick:()=>{showView('notes');selectNote(note);}},[
+        h('strong',{text:note.title||t('note.untitled')}),
+        h('span',{class:'tiny muted numeric',text:`${fmt.time(note.gmtCreate)} · ${fmt.duration(note.durationMillis||0)}`})]));
+    }
+  }
+  if(s&&changed('home-device',[s.device,s.connection,s.last_refresh_at,s.settings?.enable_incognito_mode,s.settings?.storage_type])){
+    const target=$('home-device');clear(target);
+    const settingText=key=>{const row=state.catalog.details.find(item=>item.key===key);return row?displaySettingValue(row):t('value.notReported');};
+    target.append(facts([
+      [t('home.model'),s.device?.model||t('device.unknown')],
+      [t('home.connection'),t('link.'+(s.connection||'connecting'))],
+      [t('home.cloudOnline'),s.device?.cloud_online_status===1?t('value.yes'):s.device?t('value.no'):t('value.notReported')],
+      [t('home.battery'),Number.isFinite(s.device?.battery_percent)?`${s.device.battery_percent}%`:t('value.notReported')],
+      [t('setting.enable_incognito_mode'),settingText('enable_incognito_mode')],
+      [t('setting.storage_type'),settingText('storage_type')],
+      [t('home.lastRefresh'),fmt.time(s.last_refresh_at)]
+    ]));
+  }
+}
+
+// Notes ---------------------------------------------------------------------------
+function documentData(result){
+  if(!result||result.isError)throw new Error(t('mcp.readFailed'));
+  if(result.structuredContent&&typeof result.structuredContent==='object')return result.structuredContent;
+  const text=(result.content||[]).find(item=>item.type==='text')?.text;
+  if(!text)return result;
+  try{return JSON.parse(text);}catch{return {text};}
+}
+async function loadNotes(more=false){
+  if(state.status&&state.status.mcp_available===false){state.notesLoaded=true;$('notes-status').textContent=t('notes.readerMissing');renderNotesList();return;}
+  const args={pageSize:20};if(more&&state.notesToken)args.nextToken=state.notesToken;
+  state.notesLoading=true;$('notes-status').textContent=t('state.loading');if(!more&&!state.notes.length)renderNotesList();paintHome();
+  const raw=await run('documents',{tool:'list_my_minutes',arguments:args},{button:more?$('notes-more'):$('notes-reload'),poll:false});
+  state.notesLoading=false;state.notesLoaded=true;
+  if(!raw){$('notes-status').textContent=t('notes.loadFailed');renderNotesList();paintHome();return;}
+  let result;try{result=documentData(raw);}catch(error){toast(errorText(error),'error');renderNotesList();return;}
+  const items=Array.isArray(result.items)?result.items:[];
+  state.notes=more?state.notes.concat(items):items;
+  state.notesToken=result.hasMore&&result.nextToken?result.nextToken:null;
+  $('notes-more').hidden=!state.notesToken;
+  $('notes-status').textContent=t('notes.count',{},state.notes.length)+(state.notesSavedAt?' · '+t('saved.ago',{ago:fmt.ago(state.notesSavedAt)}):'');
+  renderNotesList();paintHome();
+}
+function filteredNotes(){
+  const query=state.noteFilter.trim().toLowerCase();
+  return query?state.notes.filter(note=>(note.title||'').toLowerCase().includes(query)):state.notes;
+}
+function renderNotesList(){
+  const target=$('notes-list');clear(target);
+  if(state.notesLoading&&!state.notes.length){target.append(skeleton(6));}
+  else if(!state.notes.length){target.append(empty('notes.emptyTitle','notes.emptyBody'));}
+  else{
+    const notes=filteredNotes();
+    if(!notes.length)target.append(empty('notes.noMatchTitle','notes.noMatchBody','search'));
+    for(const note of notes){
+      const current=state.selected?.uuid===note.uuid;
+      target.append(h('button',{class:'note-item',type:'button','aria-current':current?'true':null,onclick:()=>selectNote(note)},[
+        h('strong',{text:note.title||t('note.untitled')}),
+        h('span',{class:'numeric',text:`${fmt.time(note.gmtCreate)} · ${fmt.duration(note.durationMillis||0)}`})]));
+    }
+  }
+  $('notes-empty').hidden=Boolean(state.selected)||Boolean(state.notes.length);
+  $('notes-select').hidden=Boolean(state.selected)||!state.notes.length;
+  $('note-detail').hidden=!state.selected;
+}
+function setFilter(value){state.noteFilter=value;$('notes-search').value=value;$('global-search').value=value;renderNotesList();}
+async function selectNote(note){
+  state.selected=note;state.noteTab='summary';state.transcriptRows=[];state.transcriptToken=null;state.translateToken=null;
+  state.translateTargetsLoaded=false;state.tags=null;state.share=null;state.replacement=null;state.organizeLoaded=false;
+  state.summaryText=null;state.summaryRevision=null;state.noteSavedAt=null;processingTries=0;loadNoteSize();
+  clear($('transcript-rows'));clear($('translate-output'));clear($('tags-list'));clear($('replace-results'));clear($('share-state'));clear($('translate-target'));
+  clear($('extras-output'));$('extras-output').append(h('p',{class:'small muted',text:t('details.help')}));
+  setSummaryEditing(false);$('notes-layout').classList.add('reading');
+  renderNotesList();renderSelectedNote();showNoteTab('summary');
+  // Independent reads: the backend serves them concurrently.
+  await Promise.all([refreshFavorite(),loadSummary()]);
+}
+async function reloadNote(){
+  if(!state.selected)return;
+  state.noteSavedAt=null;renderSelectedNote();
+  await fresh(()=>{
+    const reads=[refreshFavorite(),loadSummary()];
+    if(state.transcriptRows.length)reads.push(loadTranscript(false));
+    if(state.organizeLoaded)reads.push(loadTags(),loadShare());
+    return Promise.all(reads);
+  });
+}
+function renderSelectedNote(){
+  const note=state.selected;if(!note)return;
+  $('note-title').textContent=note.title||t('note.untitled');
+  $('note-meta').textContent=`${fmt.time(note.gmtCreate)} · ${fmt.duration(note.durationMillis||0)}`+(state.noteSavedAt?' · '+t('saved.ago',{ago:fmt.ago(state.noteSavedAt)}):'');
+  const favorite=$('note-favorite');favorite.setAttribute('aria-pressed',note.collected?'true':'false');
+  const label=t(note.collected?'note.unfavorite':'note.favorite');favorite.setAttribute('aria-label',label);favorite.title=label;
+  paintCompanionControls();
+}
+function showNoteTab(tab){
+  state.noteTab=tab;
+  document.querySelectorAll('[data-note-tab]').forEach(button=>button.setAttribute('aria-selected',button.dataset.noteTab===tab?'true':'false'));
+  document.querySelectorAll('[data-note-panel]').forEach(panel=>{panel.hidden=panel.dataset.notePanel!==tab;});
+  if(!state.selected)return;
+  if(tab==='transcript'&&!state.transcriptRows.length)loadTranscript(false);
+  if(tab==='translate'&&!state.translateTargetsLoaded)loadTranslateOptions();
+  if(tab==='organize'&&!state.organizeLoaded){state.organizeLoaded=true;Promise.all([loadTags(),loadShare()]);}
+}
+async function refreshFavorite(){
+  if(!state.selected)return;
+  const note=state.selected,result=await run('note-favorite-status',{task_uuid:note.uuid},{button:$('note-favorite'),poll:false});
+  if(result&&typeof result.collected==='boolean'){note.collected=result.collected;if(state.selected===note)renderSelectedNote();}
+}
+async function toggleFavorite(){
+  if(!state.selected)return;
+  const note=state.selected,expected=Boolean(note.collected);
+  const result=await run('note-favorite',{task_uuid:note.uuid,collected:!expected,expected_collected:expected},{button:$('note-favorite'),success:'note.favoriteSaved',poll:false});
+  if(result&&typeof result.collected==='boolean'){note.collected=result.collected;if(state.selected===note)renderSelectedNote();}
+}
+
+// Summary
+function setSummaryEditing(editing){
+  state.editingSummary=editing;$('summary-edit-area').hidden=!editing;$('summary-view').hidden=editing;
+  $('summary-edit').hidden=editing;$('summary-regenerate').hidden=editing;
+  if(editing){$('summary-editor').value=state.summaryText||'';$('summary-editor').focus();}
+}
+function paintSummary(){
+  const view=$('summary-view');clear(view);
+  if(state.summaryText===null)view.append(skeleton(5));
+  else if(!state.summaryText.trim())view.append(empty('summary.emptyTitle','summary.emptyBody'));
+  else view.append(markdown(state.summaryText));
+}
+async function loadSummary(){
+  if(!state.selected)return;
+  const note=state.selected;$('summary-state').textContent=t('state.loading');if(state.summaryText===null)paintSummary();
+  const result=await run('note-summary',{task_uuid:note.uuid},{button:$('summary-load'),poll:false});
+  if(state.selected!==note)return;
+  if(!result){$('summary-state').textContent=t('summary.loadFailed');if(state.summaryText===null){state.summaryText='';paintSummary();}return;}
+  if(result.processing){showProcessing('summary-view','summary-state',result.processing,note);return;}
+  processingTries=0;
+  if(result.empty){state.summaryText='';state.summaryRevision=null;paintSummary();$('summary-edit').hidden=true;
+    $('summary-state').textContent=t(result.summary_failed?'summary.failedNone':'summary.none');return;}
+  $('summary-edit').hidden=state.editingSummary;
+  state.summaryText=result.text||'';state.summaryRevision=result.revision||null;paintSummary();
+  $('summary-state').textContent=result.pending?t('summary.pending'):result.verified?t('summary.verified'):t('summary.unverified');
+}
+// The cloud is still recording, transcribing or summarizing this note: say so, and look again soon.
+let processingTimer=null,processingTries=0;
+function showProcessing(viewId,stateId,stage,note){
+  const view=$(viewId);clear(view);
+  view.append(h('div',{class:'notice'+(stage==='failed'?' warn':'')},[h('strong',{text:t('processing.'+stage)}),h('p',{class:'small muted',text:t(stage==='failed'?'processing.failedHelp':'processing.help')})]));
+  if(stateId)$(stateId).textContent=t('processing.'+stage);
+  clearTimeout(processingTimer);
+  // Look again every 15 s for 5 minutes; after that the 86001/86003 notice or Reload brings it.
+  if(stage!=='failed'&&++processingTries<=20)processingTimer=setTimeout(()=>{if(state.selected===note)fresh(reloadNote);},15000);
+}
+// A note-status push (transcription or summary finished, list changed) refreshes what is open.
+let listReloadTimer=null;
+function noteStatusChanged(data){
+  if(state.selected&&(!data.uuid||data.uuid===state.selected.uuid))fresh(reloadNote);
+  if(state.notesLoaded){clearTimeout(listReloadTimer);listReloadTimer=setTimeout(()=>fresh(loadNotes,false),1500);}
+}
+async function saveSummary(){
+  if(state.selected&&notePath()==='mcp'){
+    const text=$('summary-editor').value;
+    const result=await mcpWrite('update_minutes_summary',{taskUuid:state.selected.uuid,summaryText:text},$('summary-save'),'summary.saved');
+    if(result){state.summaryText=text;setSummaryEditing(false);paintSummary();fresh(loadSummary);}
+    return;
+  }
+  if(!state.selected||!state.summaryRevision){toast(t('summary.loadFirst'),'error');return;}
+  const text=$('summary-editor').value;
+  const result=await run('note-summary-save',{task_uuid:state.selected.uuid,text,expected_revision:state.summaryRevision},{button:$('summary-save'),success:'summary.saved',poll:false});
+  if(result){state.summaryText=result.text??text;state.summaryRevision=result.revision||state.summaryRevision;setSummaryEditing(false);paintSummary();$('summary-state').textContent=result.pending?t('summary.pending'):t('summary.verified');}
+}
+async function regenerateSummary(){
+  if(!state.selected||!state.summaryRevision){toast(t('summary.loadFirst'),'error');return;}
+  if(!await ask('summary.regenerateConfirmTitle','summary.regenerateConfirmText','summary.regenerate'))return;
+  const result=await run('note-regenerate',{task_uuid:state.selected.uuid,expected_revision:state.summaryRevision},{button:$('summary-regenerate'),poll:false});
+  if(result){
+    if(typeof result.text==='string'){state.summaryText=result.text;paintSummary();}
+    state.summaryRevision=result.revision||state.summaryRevision;
+    $('summary-state').textContent=result.pending?t('summary.regenerationPending'):t('summary.regenerated');
+  }
+}
+
+// Transcript
+function resetTranscript(){state.transcriptRows=[];state.transcriptToken=null;clear($('transcript-rows'));$('transcript-more').hidden=true;}
+async function loadTranscript(more=false){
+  if(!state.selected)return;
+  const note=state.selected;if(!more){resetTranscript();$('transcript-rows').append(skeleton(6));}
+  const source=$('transcript-source').value;let result;
+  if(source==='native'){
+    result=await run('note-transcript',{task_uuid:note.uuid,next_token:more?state.transcriptToken:null},{button:more?$('transcript-more'):$('transcript-load'),poll:false});
+  }else{
+    const args={taskUuid:note.uuid};if(more&&state.transcriptToken)args.nextToken=state.transcriptToken;
+    const raw=await run('documents',{tool:'get_minutes_transcription',arguments:args},{button:more?$('transcript-more'):$('transcript-load'),poll:false});
+    try{result=raw?documentData(raw):null;}catch(error){toast(errorText(error),'error');result=null;}
+  }
+  if(state.selected!==note)return;
+  if(!result){if(!more){clear($('transcript-rows'));$('transcript-rows').append(empty('transcript.emptyTitle','transcript.emptyBody'));}return;}
+  if(result.processing){showProcessing('transcript-rows',null,result.processing,note);return;}
+  const rows=result.paragraphs||[];
+  state.transcriptRows=more?state.transcriptRows.concat(rows):rows;
+  state.transcriptToken=(result.has_more??result.hasMore)?result.next_token||result.nextToken:null;
+  $('transcript-more').hidden=!state.transcriptToken;renderSavedTranscript();
+}
+function renderSavedTranscript(){
+  const target=$('transcript-rows');clear(target);
+  if(!state.selected)return;
+  if(!state.transcriptRows.length){target.append(empty('transcript.emptyTitle','transcript.emptyBody'));return;}
+  for(const row of state.transcriptRows)target.append(transcriptRow(row,true));
+}
+
+// Translation
+async function loadTranslateOptions(){
+  if(!state.selected)return;
+  const note=state.selected,result=await run('note-translate-options',{task_uuid:note.uuid},{button:$('translate-load-options'),poll:false});
+  if(!result||state.selected!==note)return;
+  state.translateTargetsLoaded=true;
+  const select=$('translate-target');clear(select);
+  for(const target of result.targets||[])select.append(h('option',{value:target.key,text:target.label}));
+  select.disabled=!select.options.length;$('translate-run').disabled=!select.options.length;
+  if(!select.options.length){clear($('translate-output'));$('translate-output').append(empty('translate.emptyTitle','translate.emptyBody'));}
+}
+function translatedSection(title,value){
+  if(Array.isArray(value)){
+    const list=h('div',{class:'rows'});
+    value.forEach(item=>list.append(h('div',{class:'row-item'},h('div',{class:'stack tight'},[h('strong',{text:item.topic||item.content||item.summary||''}),item.summary&&item.topic?h('p',{class:'small muted',text:item.summary}):null]))));
+    return h('section',{class:'card'},[h('h3',{text:title}),list]);
+  }
+  return h('section',{class:'card'},[h('h3',{text:title}),h('div',{style:'margin-top:8px'},value?markdown(value):h('p',{class:'small muted',text:t('value.notReported')}))]);
+}
+function renderTranslation(result,append=false){
+  const target=$('translate-output');if(!append)clear(target);
+  if(!append){
+    if(result.title)target.append(h('h3',{text:result.title}));
+    if(result.summary)target.append(translatedSection(t('note.summary'),result.summary));
+    if(result.keypoints?.length)target.append(translatedSection(t('translate.keypoints'),result.keypoints));
+    if(result.actions?.length)target.append(translatedSection(t('translate.actions'),result.actions));
+  }
+  const paragraphs=result.paragraphs||[];
+  if(!paragraphs.length&&!append&&!result.summary)target.append(empty('translate.noContentTitle','translate.noContentBody'));
+  else if(paragraphs.length){
+    let list=target.querySelector('.translated-rows');
+    if(!list){list=h('div',{class:'card rows translated-rows'});target.append(list);}
+    paragraphs.forEach(row=>list.append(transcriptRow(row,true)));
+  }
+  state.translateToken=result.next_token||result.nextToken||null;$('translate-more').hidden=!state.translateToken;
+}
+async function runTranslation(more=false){
+  if(!state.selected)return;
+  const body=more&&state.translateToken?{task_uuid:state.selected.uuid,next_token:state.translateToken}:{task_uuid:state.selected.uuid,target_language:$('translate-target').value};
+  if(!more&&!body.target_language){toast(t('translate.chooseFirst'),'error');return;}
+  if(!more){clear($('translate-output'));$('translate-output').append(skeleton(6));}
+  const result=await run('note-translate',body,{button:more?$('translate-more'):$('translate-run'),poll:false});
+  if(result)renderTranslation(result,more);else if(!more)clear($('translate-output'));
+}
+
+// Tags
+function renderTags(result){
+  state.tags=result;const target=$('tags-list'),select=$('tag-definition');clear(target);clear(select);
+  const options=result.options||[];
+  if(!options.length)target.append(h('p',{class:'small muted',text:t('tags.emptyBody')}));
+  for(const option of options){
+    const input=h('input',{type:'checkbox',value:option.handle,checked:option.selected});
+    target.append(h('label',{class:'tag-chip'},[input,h('span',{text:option.label+(option.auto_match?' · '+t('tags.autoShort'):'')})]));
+    select.append(h('option',{value:option.handle,text:option.label}));
+  }
+  updateTagDefinition();
+}
+function updateTagDefinition(){const option=state.tags?.options?.find(row=>row.handle===$('tag-definition').value);$('tag-edit-name').value=option?.label||'';$('tag-auto').checked=Boolean(option?.auto_match);}
+async function loadTags(){
+  if(!state.selected)return;
+  const note=state.selected;if(!state.tags){clear($('tags-list'));$('tags-list').append(skeleton(1));}
+  const result=await run('note-tags',{task_uuid:note.uuid},{button:$('tags-load'),poll:false});
+  if(state.selected!==note)return;
+  if(result)renderTags(result);else if(!state.tags)clear($('tags-list'));
+}
+async function createTag(){
+  if(!state.selected||!state.tags){toast(t('tags.loadFirst'),'error');return;}
+  const name=$('tag-new-name').value.trim();if(!name){toast(t('tags.nameRequired'),'error');return;}
+  const result=await run('note-tag-create',{task_uuid:state.selected.uuid,name,expected_revision:state.tags.revision},{button:$('tag-create'),success:'tags.created',poll:false});
+  if(result){renderTags(result);$('tag-new-name').value='';}
+}
+async function saveTags(){
+  if(!state.selected||!state.tags){toast(t('tags.loadFirst'),'error');return;}
+  const selected=[...$('tags-list').querySelectorAll('input:checked')].map(input=>input.value);
+  const result=await run('note-tags-save',{task_uuid:state.selected.uuid,selected_handles:selected,expected_revision:state.tags.revision},{button:$('tags-save'),success:'tags.saved',poll:false});
+  if(result)renderTags(result);
+}
+async function renameTag(){
+  if(!state.selected||!state.tags||!$('tag-definition').value){toast(t('tags.chooseFirst'),'error');return;}
+  const name=$('tag-edit-name').value.trim();if(!name){toast(t('tags.nameRequired'),'error');return;}
+  const result=await run('note-tag-rename',{task_uuid:state.selected.uuid,handle:$('tag-definition').value,name,auto_match:$('tag-auto').checked,expected_revision:state.tags.revision},{button:$('tag-rename'),success:'tags.renamed',poll:false});
+  if(result)renderTags(result);
+}
+async function deleteTag(){
+  if(!state.selected||!state.tags||!$('tag-definition').value){toast(t('tags.chooseFirst'),'error');return;}
+  if(!await ask('tags.deleteConfirmTitle','tags.deleteConfirmText','tags.delete',true))return;
+  const result=await run('note-tag-delete',{task_uuid:state.selected.uuid,handle:$('tag-definition').value,expected_revision:state.tags.revision},{button:$('tag-delete'),success:'tags.deleted',poll:false});
+  if(result)renderTags(result);
+}
+
+// Account settings: smart slicing and voiceprint (not device settings).
+async function loadAccountSettings(){
+  const result=await run('account-settings',{}, {button:$('account-load'),poll:false});
+  if(result)renderAccountSettings(result);
+}
+function renderAccountSettings(result){
+  const target=$('account-view');clear(target);
+  const toggle=(label,checked,disabled,onchange)=>h('label',{class:'switch'},[h('input',{type:'checkbox',role:'switch',checked,disabled,onchange}),h('span',{text:t(label)})]);
+  target.append(toggle('account.slicing',Boolean(result.slicing?.enabled),false,event=>saveAccountSetting('slicing-save',event.target)));
+  const voice=result.voiceprint||{};
+  target.append(toggle('account.voiceprint',Boolean(voice.enabled),!voice.enrolled,event=>saveAccountSetting('voiceprint-save',event.target)));
+  if(!voice.enrolled)target.append(h('p',{class:'tiny muted',text:t('account.voiceprintEnroll')}));
+  else if(dangerous())target.append(h('div',{},h('button',{class:'btn danger small',type:'button',text:t('account.voiceprintClear'),onclick:async event=>{
+    if(!await askTyped('account.voiceprintClearTitle','account.voiceprintClearText','clear'))return;
+    const done=await run('voiceprint-clear',{confirm:'clear'},{button:event.currentTarget,success:'account.saved',poll:false});if(done)renderAccountSettings(done);}})));
+}
+async function saveAccountSetting(action,input){
+  const body={enabled:input.checked},options={success:'account.saved',poll:false};
+  const result=await withReadiness(()=>action==='slicing-save'?run('slicing-save',body,options):run('voiceprint-save',body,options));
+  if(result)renderAccountSettings(result);else input.checked=!input.checked;
+}
+
+// Product information and the phones linked to the A2 (read only).
+async function loadDeviceInfo(){
+  const result=await run('device-info',{}, {button:$('device-info-load'),poll:false});if(!result)return;
+  const target=$('device-info-view');clear(target);
+  const product=result.product||{};
+  target.append(facts([[t('deviceInfo.product'),product.productName||t('value.notReported')],[t('deviceInfo.connect'),product.connectType??t('value.notReported')]]));
+  target.append(h('strong',{class:'small',text:t('deviceInfo.phones')}));
+  if(!(result.phones||[]).length)target.append(h('p',{class:'small muted',text:t('deviceInfo.noPhones')}));
+  for(const phone of result.phones||[])target.append(h('div',{class:'row-item'},[h('span',{class:'grow',text:phone.name||t('deviceInfo.unnamed')}),badge(t('deviceInfo.state.'+phone.state),phone.state==='connected'?'ok':'')]));
+}
+
+// MCP consent through this console's port: the approval tab comes back to /mcp/callback.
+function mcpReadState(){return (state.status?.credentials?.items||[]).find(item=>item.id==='mcp_grant')?.state;}
+function paintMcpAccess(){
+  const s=state.status||{};
+  if(!changed('mcp-access',[s.mcp_available,s.mcp_write_available,mcpReadState()]))return;
+  const target=$('mcp-access-view');clear(target);
+  const read=mcpReadState(),readOk=Boolean(read)&&!['missing','not_authorized','not_configured','expired','invalid','unprotected'].includes(read);
+  target.append(facts([[t('mcpAccess.read'),readOk?t('mcpAccess.granted'):t('mcpAccess.missing')],[t('mcpAccess.write'),s.mcp_write_available?t('mcpAccess.granted'):t('mcpAccess.missing')]]));
+  for(const id of ['mcp-grant-write','mcp-renew-read','mcp-finish'])$(id).disabled=!s.mcp_available;
+}
+async function startMcpLogin(access,returnTo,button){
+  // Open the tab inside the click so the browser does not block it, then send it to the vendor.
+  const tab=window.open('about:blank','_blank');
+  const result=await run('mcp-login-start',{access,return_to:returnTo},{button,poll:false});
+  if(!result){if(tab)tab.close();return;}
+  if(tab){tab.opener=null;tab.location.href=result.url;}else window.location.href=result.url;
+  $('mcp-access-state').textContent=t('mcpAccess.opened');
+}
+async function finishMcpLogin(){
+  const url=$('mcp-paste').value.trim();if(!url)return;
+  if(await run('mcp-login-finish',{url},{button:$('mcp-finish'),success:'mcpAccess.done',poll:'await'})){$('mcp-paste').value='';$('mcp-access-state').textContent='';}
+}
+
+// MCP write path (user choice in Settings → Note edits; the write grant is separate from reads).
+function mcpWrites(){return Boolean(state.status?.mcp_write_available);}
+function notePath(){return mcpWrites()&&prefs.get('notePath','application')==='mcp'?'mcp':'application';}
+async function mcpWrite(tool,args,button,success){
+  return run('note-mcp-write',{tool,arguments:args},{button,success,poll:false});
+}
+function paintMcpControls(){
+  const available=mcpWrites();
+  if(!changed('mcp-controls',[available,prefs.get('notePath','application')]))return;
+  $('note-rename').hidden=!available;$('hotwords-add-row').hidden=!available;
+  const select=$('note-path');select.value=notePath();select.querySelector('option[value="mcp"]').disabled=!available;
+  $('note-path-state').textContent=t(available?'notePath.mcpReady':'notePath.mcpMissing');
+}
+function editTitle(editing){
+  $('note-title-form').hidden=!editing;$('note-title').hidden=editing;
+  if(editing){$('note-title-input').value=state.selected?.title||'';$('note-title-input').focus();}
+}
+async function saveTitle(){
+  if(!state.selected)return;
+  const note=state.selected,title=$('note-title-input').value.trim();if(!title)return;
+  const result=await mcpWrite('update_minutes_title',{taskUuid:note.uuid,title},$('note-title-form').querySelector('button[type="submit"]'),'note.titleSaved');
+  if(result){note.title=title;editTitle(false);renderSelectedNote();renderNotesList();}
+}
+async function renameSpeaker(){
+  if(!state.selected)return;
+  const from=$('speaker-from').value.trim(),to=$('speaker-to').value.trim();if(!from||!to)return;
+  const result=notePath()==='mcp'
+    ?await mcpWrite('replace_speaker',{taskUuid:state.selected.uuid,speakerNick:from,targetNickName:to},$('speaker-save'),'speaker.saved')
+    :await run('note-speaker-rename',{task_uuid:state.selected.uuid,from,to},{button:$('speaker-save'),success:'speaker.saved',poll:false});
+  if(result){$('speaker-from').value='';$('speaker-to').value='';resetTranscript();}
+}
+// The hot-word list shape is not pinned; show strings or the word field of each row.
+function hotWordsFrom(data){
+  const rows=Array.isArray(data)?data:Object.values(data||{}).find(Array.isArray)||[];
+  return rows.map(row=>typeof row==='string'?row:row&&(row.word||row.hotWord||row.hotword||row.name||row.value)).filter(word=>typeof word==='string'&&word);
+}
+async function loadHotWords(){
+  const raw=await run('documents',{tool:'list_hot_words',arguments:{}},{button:$('hotwords-load'),poll:false});
+  let words=[];try{words=raw?hotWordsFrom(documentData(raw)):[];}catch(error){toast(errorText(error),'error');}
+  const target=$('hotwords-list');clear(target);
+  if(!words.length){target.append(h('p',{class:'small muted',text:t('hotwords.empty')}));return;}
+  for(const word of words){
+    target.append(h('span',{class:'badge'},[h('span',{text:word}),mcpWrites()?h('button',{class:'icon-btn',type:'button','aria-label':t('hotwords.delete')+' '+word,title:t('hotwords.delete'),onclick:async event=>{
+      if(await mcpWrite('delete_personal_hotword',{hotWordList:[word]},event.currentTarget,'hotwords.saved'))fresh(loadHotWords);}},h('span',{text:'×'})):null]));
+  }
+}
+async function addHotWords(){
+  const words=$('hotwords-new').value.split(/[,，]/).map(word=>word.trim()).filter(Boolean);if(!words.length)return;
+  if(await mcpWrite('add_personal_hot_word',{hotWordList:words},$('hotwords-add'),'hotwords.saved')){$('hotwords-new').value='';fresh(loadHotWords);}
+}
+
+// Find and replace
+async function previewReplacement(){
+  if(!state.selected)return;
+  const find=$('replace-find').value,replace=$('replace-with').value;if(!find){toast(t('replace.findRequired'),'error');return;}
+  const result=await run('note-replace-preview',{task_uuid:state.selected.uuid,find,replace},{button:$('replace-preview'),poll:false});
+  if(!result)return;
+  state.replacement=result;const target=$('replace-results');clear(target);
+  target.append(h('div',{class:'notice accent',text:t('replace.matches',{matches:result.matches||0,paragraphs:result.paragraphs_changed||0},result.matches||0)}));
+  for(const change of result.changes||[]){
+    target.append(h('div',{class:'row-item'},h('div',{class:'stack tight'},[h('strong',{class:'small',text:t('replace.paragraph',{number:change.paragraph})}),h('p',{class:'small muted',text:change.before}),h('p',{text:change.after})])));
+  }
+}
+async function saveReplacement(){
+  if(state.selected&&notePath()==='mcp'){
+    const find=$('replace-find').value,replace=$('replace-with').value;if(!find||!replace){toast(t('replace.findRequired'),'error');return;}
+    const result=await mcpWrite('replace_minutes_text',{taskUuid:state.selected.uuid,originalText:find,replacedText:replace},$('replace-save'),'replace.saved');
+    if(result){state.replacement=null;resetTranscript();clear($('replace-results'));$('replace-results').append(h('div',{class:'notice',text:t('replace.reloadTranscript')}));}
+    return;
+  }
+  if(!state.selected||!state.replacement){toast(t('replace.previewFirst'),'error');return;}
+  const result=await run('note-replace-save',{task_uuid:state.selected.uuid,find:$('replace-find').value,replace:$('replace-with').value,expected_revision:state.replacement.revision},{button:$('replace-save'),success:'replace.saved',poll:false});
+  if(result){state.replacement=null;resetTranscript();clear($('replace-results'));$('replace-results').append(h('div',{class:'notice',text:t('replace.reloadTranscript')}));}
+}
+
+// Sharing
+function paintSharePassword(){
+  const share=state.share||{},public_=$('share-access').value==='public';
+  $('share-password').hidden=!public_;$('share-password').value='';
+  $('share-password-clear').hidden=!(public_&&share.access==='public'&&share.password_protected);
+}
+function renderShare(result){
+  state.share=result;$('share-copy').disabled=Boolean(result.pending);
+  const target=$('share-state');clear(target);
+  target.append(facts([[t('share.current'),t('share.'+result.access)],[t('share.enabled'),result.sharing_enabled?t('value.yes'):t('value.no')],[t('share.password'),result.password_protected?t('value.yes'):t('value.no')],[t('share.pending'),result.pending?t('value.yes'):t('value.no')]]));
+  const select=$('share-access');clear(select);
+  for(const access of result.allowed_access||['private','public'])select.append(h('option',{value:access,text:t('share.'+access),selected:access===result.access}));
+  paintSharePassword();
+}
+async function loadShare(){
+  if(!state.selected)return;
+  const note=state.selected;if(!state.share){clear($('share-state'));$('share-state').append(skeleton(2));}
+  const result=await run('note-share',{task_uuid:note.uuid},{button:$('share-refresh'),poll:false});
+  if(state.selected!==note)return;
+  if(result)renderShare(result);else if(!state.share)clear($('share-state'));
+}
+async function copyText(value){
+  if(window.isSecureContext&&navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(value);return;}catch{}}
+  const field=h('textarea',{class:'sr-only',text:value,'aria-hidden':'true'});document.body.append(field);field.select();
+  const copied=document.execCommand('copy');field.remove();if(!copied)throw new Error('Clipboard unavailable');
+}
+async function copyShare(){
+  if(!state.selected||!state.share){toast(t('share.loadFirst'),'error');return;}
+  const result=await run('note-share-url',{task_uuid:state.selected.uuid},{button:$('share-copy'),poll:false});
+  if(!result)return;
+  try{await copyText(result.url);toast(t('share.copied'));}catch{toast(t('share.copyFailed'),'error');}
+}
+async function saveShare(){
+  if(!state.selected||!state.share){toast(t('share.loadFirst'),'error');return;}
+  const access=$('share-access').value,password=$('share-password').value.trim();
+  if(access==='public'&&!await ask('share.publicConfirmTitle','share.publicConfirmText','share.save'))return;
+  const body={task_uuid:state.selected.uuid,access,expected_revision:state.share.revision};
+  if(access==='public'&&password)body.password=password;
+  const result=await run('note-share-save',body,{button:$('share-save'),success:'share.saved',poll:false});
+  if(result){renderShare(result);if(password)toast(t('share.passwordSet',{password}));}
+}
+async function clearSharePassword(){
+  if(!state.selected||!state.share)return;
+  const result=await run('note-share-save',{task_uuid:state.selected.uuid,access:'public',expected_revision:state.share.revision,password:''},{button:$('share-password-clear'),success:'share.passwordCleared',poll:false});
+  if(result)renderShare(result);
+}
+
+// Details: read-only document tools, rendered as lists instead of raw JSON.
+const PRIMARY_FIELDS=['content','text','title','name','keyword','topic','summary','fullSummary'];
+const humanize=key=>String(key).replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/^./,first=>first.toUpperCase());
+function readable(value){
+  if(value===null||value===undefined||value==='')return h('p',{class:'small muted',text:t('value.notReported')});
+  if(typeof value!=='object')return h('p',{class:'prose',text:String(value)});
+  if(Array.isArray(value)){
+    if(!value.length)return h('p',{class:'small muted',text:t('details.emptyList')});
+    if(value.every(item=>item===null||typeof item!=='object'))return h('div',{class:'chips'},value.map(item=>badge(String(item))));
+    const list=h('div',{class:'rows'});
+    for(const item of value){
+      const main=PRIMARY_FIELDS.map(field=>item[field]).find(text=>typeof text==='string'&&text);
+      const meta=Object.entries(item).filter(([key,v])=>!PRIMARY_FIELDS.includes(key)&&v!==null&&typeof v!=='object').map(([key,v])=>`${humanize(key)}: ${v}`).join(' · ');
+      list.append(h('div',{class:'row-item'},h('div',{class:'stack tight'},[h('p',{text:main||JSON.stringify(item)}),meta?h('span',{class:'tiny muted',text:meta}):null])));
+    }
+    return list;
+  }
+  const wrap=h('div',{class:'stack'}),scalars=[];
+  const nested=Object.entries(value).filter(([,v])=>v!==null&&typeof v==='object');
+  for(const [key,v] of Object.entries(value)){
+    // A single nested list (such as items or keywords) is the content itself, so it gets no heading.
+    if(v!==null&&typeof v==='object')wrap.append(nested.length===1?readable(v):h('section',{class:'stack tight'},[h('h3',{text:humanize(key)}),readable(v)]));
+    else scalars.push([humanize(key),v===null||v===undefined?t('value.notReported'):String(v)]);
+  }
+  if(scalars.length)wrap.prepend(facts(scalars));
+  return wrap;
+}
+async function readNoteExtra(tool,button,pick=null){
+  if(!state.selected)return;
+  const target=$('extras-output');clear(target);target.append(skeleton(4));
+  const raw=await run('documents',{tool,arguments:{taskUuid:state.selected.uuid}},{button,poll:false});
+  clear(target);
+  if(!raw){target.append(h('p',{class:'small muted',text:t('details.help')}));return;}
+  let data;try{data=documentData(raw);}catch(error){target.append(h('p',{class:'small muted',text:errorText(error)}));return;}
+  const shown=pick?pick(data):data;
+  target.append(h('h3',{style:'margin-bottom:8px',text:button.textContent}),readable(shown));
+  if(state.protocol)target.append(h('div',{class:'protocol',style:'margin-top:12px'},codeView(data)));
+}
+async function readMcpSummary(){
+  await readNoteExtra('get_minutes_ai_summary',$('summary-mcp'),data=>data.hasSummary===false||!data.fullSummary?t('summary.noMcp'):data.fullSummary);
+}
+
+// Export and original audio
+async function downloadNote(kind,button,target=null,bilingual=false,file_format='txt'){
+  if(!state.selected)return;
+  if(target!==null&&!target){toast(t('translate.chooseFirst'),'error');return;}
+  const body={task_uuid:state.selected.uuid,kind};
+  if(target){body.target_language=target;body.bilingual=bilingual;}
+  if(file_format!=='txt')body.file_format=file_format;
+  const response=await run('note-export',body,{button,download:true,poll:false});
+  if(!response)return;
+  const blob=await response.blob(),url=URL.createObjectURL(blob),suffix=target?'-'+target+(bilingual?'-bilingual':''):'';
+  const extension={txt:'txt',markdown:'md',srt:'srt',docx:'docx',pdf:'pdf'}[file_format];
+  const link=h('a',{href:url,download:'qwennote-'+kind+suffix+'.'+extension});
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $('export-menu').open=false;
+  toast(t('note.downloaded',{type:t('note.'+kind)}));
+}
+async function downloadMedia(){
+  if(!state.selected)return;
+  const result=await run('note-media-download',{task_uuid:state.selected.uuid},{button:$('note-media-download'),poll:false});
+  if(result){$('export-menu').open=false;toast(t('media.saved',{name:result.filename}));}
+}
+
+// A destructive action asks for a typed word, not just a click.
+function askTyped(title,text,word){
+  $('typed-title').textContent=t(title);$('typed-text').textContent=t(text);
+  const input=$('typed-input');
+  $('typed-label').textContent=t('danger.typeWord',{word});input.value='';input.setCustomValidity('');input.oninput=()=>input.setCustomValidity('');
+  $('typed-dialog').showModal();input.focus();
+  return new Promise(resolve=>{
+    const finish=value=>{$('typed-form').onsubmit=null;$('typed-cancel').onclick=null;$('typed-dialog').onclose=null;if($('typed-dialog').open)$('typed-dialog').close();resolve(value);};
+    // A wrong word keeps the dialog open and says what to type, instead of closing with no message.
+    $('typed-form').onsubmit=event=>{event.preventDefault();if(input.value.trim().toLowerCase()===word)finish(true);else{input.setCustomValidity(t('danger.typeWord',{word}));input.reportValidity();}};
+    $('typed-cancel').onclick=()=>finish(false);$('typed-dialog').onclose=()=>finish(false);
+  });
+}
+function dangerous(){return Boolean(state.status?.dangerous_enabled);}
+function paintDanger(){
+  if(!changed('danger',[dangerous(),state.status?.connection]))return;
+  $('danger-switch').checked=dangerous();$('device-unbind').disabled=!dangerous()||state.status?.connection!=='connected';$('ble-pairing').disabled=!dangerous();
+  $('note-delete').hidden=!dangerous();
+}
+async function toggleDanger(event){
+  const enable=event.target.checked;
+  if(enable&&!await ask('danger.enableTitle','danger.enableText','danger.enable',true)){event.target.checked=false;return;}
+  await run('dangerous',enable?{enabled:true,confirm:true}:{enabled:false},{poll:'await'});
+}
+// The pairing file holds the A2's device secret: download only, never shown on the page.
+async function downloadBlePairing(){
+  if(!await askTyped('ble.title','ble.text','pair'))return;
+  const response=await run('ble-pairing-file',{confirm:'pair'},{button:$('ble-pairing'),download:true,poll:false});if(!response)return;
+  const url=URL.createObjectURL(await response.blob());const link=h('a',{href:url,download:'a2-pairing.json'});
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(t('ble.saved'));
+}
+async function unbindDevice(){
+  if(!await askTyped('danger.unbindTitle','danger.unbindText','unbind'))return;
+  await run('device-unbind',{confirm:'unbind'},{button:$('device-unbind'),success:'danger.unbound',poll:'await'});
+}
+async function deleteNote(){
+  if(!state.selected)return;
+  if(!await askTyped('note.deleteTitle','note.deleteText','delete'))return;
+  const note=state.selected;
+  const result=await run('note-delete',{task_uuid:note.uuid,confirm:'delete'},{button:$('note-delete'),success:'note.deleted',poll:false});
+  if(result){$('export-menu').open=false;state.notes=state.notes.filter(item=>item.uuid!==note.uuid);state.selected=null;renderNotesList();paintHome();}
+}
+
+// Notes: search all notes on Enter, or show favorites or a tag (native lists).
+async function loadNoteSources(){
+  const result=await run('notes-browse',{mode:'tags'},{poll:false});if(!result)return;
+  const select=$('notes-source');for(const option of [...select.options])if(option.dataset.tag)option.remove();
+  for(const tag of result.tags||[])select.append(h('option',{value:'tag:'+tag.handle,text:t('notes.sourceTag',{name:tag.name}),'data-tag':'1'}));
+}
+async function browseNotes(body,button){
+  state.notesLoading=true;renderNotesList();
+  const result=await run('notes-browse',body,{button,poll:false});
+  state.notesLoading=false;state.notesLoaded=true;
+  if(!result){renderNotesList();return;}
+  state.notes=result.items||[];state.notesToken=null;state.noteFilter='';$('notes-search').value='';
+  $('notes-more').hidden=true;$('notes-status').textContent=t('notes.count',{},state.notes.length);renderNotesList();
+}
+function changeNoteSource(){
+  const value=$('notes-source').value;
+  if(value==='all')return fresh(loadNotes,false);
+  if(value==='favorites')return browseNotes({mode:'favorites'},$('notes-source'));
+  return browseNotes({mode:'tag',tag:value.slice(4)},$('notes-source'));
+}
+function searchNotes(event){
+  if(event.key!=='Enter')return;
+  const query=$('notes-search').value.trim();if(!query)return changeNoteSource();
+  event.preventDefault();$('notes-source').value='all';browseNotes({mode:'search',query},null);
+}
+
+// Note markers (Details tab).
+function clockToMs(value){
+  const parts=String(value).trim().split(':').map(Number);
+  if(!parts.length||parts.some(n=>!Number.isFinite(n)||n<0))return null;
+  return Math.round(parts.reduce((total,n)=>total*60+n,0)*1000);
+}
+function markerRows(markers,actions){
+  if(!markers.length)return [h('p',{class:'small muted',text:t('markers.empty')})];
+  return markers.map(marker=>h('div',{class:'row-item'},[h('span',{class:'tiny muted numeric',text:fmt.duration(marker.time_ms||0)}),
+    h('span',{class:'grow',text:marker.text||t('markers.kind.'+marker.kind)}),...(actions?actions(marker):[])]));
+}
+async function showNoteMarkers(addMs){
+  if(!state.selected)return;
+  const body={task_uuid:state.selected.uuid};if(addMs!==undefined)body.add_ms=addMs;
+  const result=await run('note-markers',body,{button:$('note-markers'),success:addMs!==undefined?'markers.added':null,poll:false});
+  if(!result)return;
+  const target=$('extras-output');clear(target);
+  const input=h('input',{type:'text',placeholder:'mm:ss',style:'width:7em','aria-label':t('markers.time')});
+  target.append(h('div',{class:'stack'},[...markerRows(result.markers||[]),
+    h('div',{class:'row'},[input,h('button',{class:'btn small',type:'button',text:t('markers.add'),onclick:()=>{const ms=clockToMs(input.value);if(ms===null){toast(t('markers.badTime'),'error');return;}showNoteMarkers(ms);}})])]));
+}
+
+// Recordings: everything the A2 stored in the cloud, including recordings that are not notes yet.
+const recordingsState={rows:[],token:null};
+const groupsState={list:[]};
+async function loadRecordings(more=false){
+  const body=more&&recordingsState.token?{next_token:recordingsState.token}:{};
+  body.source=$('recordings-source').value;
+  if(!more){const target=$('recordings-list');clear(target);target.append(skeleton(3));}
+  const result=await run('recordings',body,{button:more?$('recordings-more'):$('recordings-load'),poll:false});
+  if(!result){if(!more)clear($('recordings-list'));return;}
+  recordingsState.rows=more?recordingsState.rows.concat(result.recordings||[]):(result.recordings||[]);
+  recordingsState.token=result.has_more?result.next_token:null;renderRecordings();
+}
+function renderRecordings(){
+  const target=$('recordings-list');clear(target);$('recordings-more').hidden=!recordingsState.token;
+  if(!recordingsState.rows.length){target.append(empty('recordings.emptyTitle','recordings.emptyBody','mic'));return;}
+  for(const row of recordingsState.rows){
+    const badges=[badge(t('recordings.state.'+row.note_state),row.note_state==='transcribed'?'ok':row.note_state==='failed'?'warn':'')];
+    if(row.incognito)badges.push(badge(t('recordings.incognito')));
+    const group=groupsState.list.find(item=>item.handle===row.group);if(group)badges.push(badge(group.name));
+    if(row.in_recycle_bin)badges.push(badge(t('recordings.recycled'),'warn'));
+    const actions=[h('button',{class:'btn small',type:'button',text:t('recordings.save'),onclick:event=>saveRecording(row,event.currentTarget)})];
+    if(!row.in_recycle_bin&&['not-transcribed','failed'].includes(row.note_state))
+      actions.push(h('button',{class:'btn small',type:'button',text:t('recordings.makeNote'),onclick:event=>run('recording-make-note',{handle:row.handle},{button:event.currentTarget,success:'recordings.noteRequested',poll:false})}));
+    if(row.in_recycle_bin)actions.push(h('button',{class:'btn small',type:'button',text:t('recordings.restore'),onclick:async event=>{if(await run('recording-recover',{handle:row.handle},{button:event.currentTarget,success:'recordings.restored',poll:false}))fresh(loadRecordings);}}));
+    if(row.has_fid)actions.push(h('button',{class:'btn small',type:'button',text:t('markers.title'),onclick:event=>showRecordingMarkers(row,event.currentTarget)}));
+    if(groupsState.list.length&&!row.in_recycle_bin){
+      const move=h('select',{'aria-label':t('groups.move'),style:'width:auto',onchange:async event=>{if(event.target.value&&await run('recording-move',{handle:row.handle,group:event.target.value},{success:'groups.moved',poll:false})){row.group=event.target.value;renderRecordings();}}},
+        [h('option',{value:'',text:t('groups.move')}),...groupsState.list.map(item=>h('option',{value:item.handle,text:item.name}))]);
+      actions.push(move);
+    }
+    if(dangerous())actions.push(h('button',{class:'btn danger small',type:'button',text:t(row.in_recycle_bin?'recordings.deleteForever':'recordings.delete'),onclick:event=>deleteRecording(row,event.currentTarget)}));
+    target.append(h('div',{class:'row-item'},[
+      h('div',{class:'grow stack tight'},[h('strong',{text:row.name||fmt.time(row.created_at_ms)}),
+        h('span',{class:'tiny muted numeric',text:`${fmt.time(row.created_at_ms)} · ${fmt.duration(row.duration_ms||0)} · ${fmt.bytes(row.bytes)}`}),h('div',{class:'row'},badges)]),
+      h('div',{class:'row'},actions)]));
+  }
+}
+async function showRecordingMarkers(row,button){
+  const result=await run('recording-markers',{handle:row.handle},{button,poll:false});if(!result)return;
+  const holder=button.closest('.row-item');holder.querySelector('.recording-markers')?.remove();
+  const time=h('input',{type:'text',placeholder:'mm:ss',style:'width:7em','aria-label':t('markers.time')});
+  const note=h('input',{type:'text',maxlength:'2000',class:'grow','aria-label':t('markers.text'),placeholder:t('markers.textOptional')});
+  const actions=marker=>marker.kind==='text'?[
+    h('button',{class:'btn ghost small',type:'button',text:t('action.edit'),onclick:async()=>{const text=window.prompt(t('markers.text'),marker.text||'');if(text&&await run('recording-marker-save',{marker:marker.handle,text},{success:'markers.saved',poll:false}))showRecordingMarkers(row,button);}}),
+    h('button',{class:'btn ghost small',type:'button',text:t('action.delete'),onclick:async()=>{if(await run('recording-marker-delete',{marker:marker.handle},{success:'markers.deleted',poll:false}))showRecordingMarkers(row,button);}})]
+    :[h('button',{class:'btn ghost small',type:'button',text:t('action.delete'),onclick:async()=>{if(await run('recording-marker-delete',{marker:marker.handle},{success:'markers.deleted',poll:false}))showRecordingMarkers(row,button);}})];
+  holder.append(h('div',{class:'recording-markers stack',style:'flex-basis:100%'},[...markerRows(result.markers||[],actions),
+    h('div',{class:'row'},[time,note,h('button',{class:'btn small',type:'button',text:t('markers.add'),onclick:async()=>{
+      const ms=clockToMs(time.value);if(ms===null){toast(t('markers.badTime'),'error');return;}
+      const body={handle:row.handle,time_ms:ms};if(note.value.trim())body.text=note.value.trim();
+      if(await run('recording-marker-save',body,{success:'markers.added',poll:false}))showRecordingMarkers(row,button);}})])]));
+}
+async function loadGroups(){
+  const result=await run('recording-groups',{}, {button:$('recordings-groups'),poll:false});if(!result)return;
+  groupsState.list=result.groups||[];renderGroups(result.counts||{});renderRecordings();
+}
+function renderGroups(counts){
+  const target=$('groups-view');clear(target);target.hidden=false;
+  target.append(h('p',{class:'small muted',text:t('groups.counts',{total:counts.total??'?',ungrouped:counts.ungrouped??'?',bin:counts.recycle_bin??'?'})}));
+  for(const group of groupsState.list){
+    const actions=[h('button',{class:'btn ghost small',type:'button',text:t('groups.rename'),onclick:async()=>{const name=window.prompt(t('groups.name'),group.name);
+      if(name&&name.trim()){const result=await run('recording-group-save',{group:group.handle,name:name.trim()},{success:'groups.saved',poll:false});if(result){groupsState.list=result.groups||[];renderGroups(result.counts||{});}}}})];
+    if(dangerous())actions.push(h('button',{class:'btn danger small',type:'button',text:t('action.delete'),onclick:async()=>{
+      if(!await askTyped('groups.deleteTitle','groups.deleteText','delete'))return;
+      const result=await run('recording-group-delete',{group:group.handle,confirm:'delete'},{success:'groups.deleted',poll:false});if(result){groupsState.list=result.groups||[];renderGroups(result.counts||{});renderRecordings();}}}));
+    target.append(h('div',{class:'row-item'},[h('strong',{class:'grow',text:group.name}),h('span',{class:'tiny muted numeric',text:t('groups.files',{},group.files??0)}),...actions]));
+  }
+  const name=h('input',{type:'text',maxlength:'60',class:'grow','aria-label':t('groups.name'),placeholder:t('groups.newName')});
+  target.append(h('div',{class:'row'},[name,h('button',{class:'btn small',type:'button',text:t('groups.create'),onclick:async()=>{
+    if(!name.value.trim())return;const result=await run('recording-group-save',{name:name.value.trim()},{success:'groups.saved',poll:false});
+    if(result){groupsState.list=result.groups||[];renderGroups(result.counts||{});}}})]));
+}
+async function saveRecording(row,button){
+  const format=$('recordings-format').value;
+  const response=await run('recording-audio',{handle:row.handle,format},{button,download:true,poll:false});
+  if(!response)return;
+  const blob=await response.blob(),url=URL.createObjectURL(blob);
+  const link=h('a',{href:url,download:(row.name||'recording').replace(/[\\/:*?"<>|]+/g,'-')+'.'+format});
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast(t('recordings.saved'));
+}
+async function deleteRecording(row,button){
+  const permanent=row.in_recycle_bin;
+  if(permanent?!await askTyped('recordings.deleteForeverTitle','recordings.deleteForeverText','delete')
+              :!await ask('recordings.deleteTitle','recordings.deleteText','recordings.delete',true))return;
+  const body=permanent?{handle:row.handle,permanent:true,confirm:'delete'}:{handle:row.handle};
+  if(await run('recording-delete',body,{button,success:'recordings.deleted',poll:false}))fresh(loadRecordings);
+}
+
+// Memos ---------------------------------------------------------------------------
+async function loadMemos(){
+  const limit=Number($('memos-limit').value);
+  if(!Number.isInteger(limit)||limit<1||limit>100){toast(t('memos.badLimit'),'error');return;}
+  state.memosLoaded=true;const target=$('memos-list');clear(target);target.append(skeleton(4));
+  const result=await run('audio-memos',{limit},{button:$('memos-load'),poll:false});clear(target);
+  if(!result){target.append(empty('memos.emptyTitle','memos.emptyBody','mic'));return;}
+  const items=result.items||[];
+  if(!items.length){target.append(empty('memos.emptyTitle','memos.emptyBody','mic'));return;}
+  for(const memo of items){
+    target.append(h('div',{class:'row-item'},[
+      h('div',{class:'stack tight grow'},[h('span',{class:'tiny muted numeric',text:`${fmt.time(memo.created_at_ms)} · ${fmt.duration(memo.duration_ms)}`}),h('p',{text:memo.text||t('memos.noText')})]),
+      h('div',{class:'row'},[
+        h('button',{class:'btn ghost small',type:'button',text:t('transcript.addDraft'),disabled:!memo.text,onclick:()=>addDraft(memo.text)}),
+        h('button',{class:'btn ghost small',type:'button',text:t('action.edit'),onclick:async()=>{const text=window.prompt(t('memos.editText'),memo.text||'');
+          if(text&&text.trim()&&await run('memo-update',{handle:memo.handle,text},{success:'memos.saved',poll:false}))fresh(loadMemos);}}),
+        dangerous()?h('button',{class:'btn danger small',type:'button',text:t('action.delete'),onclick:async()=>{
+          if(await ask('memos.deleteTitle','memos.deleteText','action.delete',true)&&await run('memo-delete',{handle:memo.handle},{success:'memos.deleted',poll:false}))fresh(loadMemos);}}):null])]));
+  }
+  if(result.has_more)target.append(h('div',{class:'notice',text:t('memos.moreAvailable')}));
+}
+
+// Assistant -----------------------------------------------------------------------
+function updateAssistantCount(){$('assistant-count').textContent=`${fmt.number($('assistant-input').value.length)} / ${fmt.number(32000)}`;}
+function addDraft(text){
+  if(!text||!String(text).trim()){toast(t('assistant.nothingToAdd'),'error');return false;}
+  const input=$('assistant-input'),addition=String(text).trim(),next=(input.value.trim()?input.value.replace(/\s+$/,'')+'\n\n':'')+addition;
+  if(next.length>32000){toast(t('assistant.tooLong'),'error');return false;}
+  input.value=next;updateAssistantCount();openCompanion(false);toast(t('assistant.added'));return true;
+}
+function renderThread(){
+  const thread=$('assistant-thread');clear(thread);
+  const messages=state.assistant.messages;
+  if(!messages.length){thread.append(empty('assistant.emptyTitle','assistant.emptyBody','spark'));return;}
+  for(const message of messages){
+    const rich=message.role==='assistant'&&!message.pending&&message.text;
+    const bubble=rich?h('div',{class:'bubble assistant'},markdown(message.text))
+      :h('div',{class:`bubble ${message.role}${message.pending?' pending':''}`,text:message.pending?t('assistant.thinking'):(message.text||t('assistant.noReply'))});
+    if(!rich){thread.append(bubble);continue;}
+    const actions=h('div',{class:'bubble-actions'},[
+      h('button',{class:'btn ghost small',type:'button',onclick:async()=>{try{await copyText(message.text);toast(t('assistant.copied'));}catch{toast(t('share.copyFailed'),'error');}}},[icon('copy'),t('assistant.copy')]),
+      h('button',{class:'btn ghost small',type:'button',text:t('assistant.useAsDraft'),onclick:()=>addDraft(message.text)})]);
+    thread.append(h('div',{style:'align-self:flex-start;max-width:88%'},[bubble,actions]));
+  }
+  thread.scrollTop=thread.scrollHeight;
+}
+function paintAssistantRoute(){$('assistant-route').textContent=state.protocol?state.assistant.route:'';}
+function paintCompanionControls(){
+  // A status snapshot taken before this page's reply arrived still says "in progress"; ignore it.
+  const s=state.status||{},serverBusy=Boolean(s.assistant_in_progress)&&Number(s.server_time||0)>state.assistant.finishedAt;
+  const busy=state.assistant.busy||serverBusy;
+  if(!changed('companion-controls',[busy,state.assistant.busy,s.assistant_builtin_available,s.assistant_conversation_active,s.assistant_recovery_available,
+    s.assistant_custom_configured,$('assistant-provider').value,state.selected?.uuid,state.selected?.title,$('assistant-context').checked,state.assistant.size]))return;
+  $('assistant-new').disabled=busy;
+  $('assistant-conversations').disabled=!s.assistant_builtin_available||busy;
+  $('assistant-history').disabled=!s.assistant_conversation_active||busy;
+  $('assistant-recover').hidden=!s.assistant_recovery_available;$('assistant-recover').disabled=busy;
+  $('assistant-send').disabled=state.assistant.busy;$('assistant-cancel').hidden=!busy;
+  const custom=$('assistant-provider').querySelector('[value="custom"]');
+  custom.disabled=!s.assistant_custom_configured;if(custom.disabled&&$('assistant-provider').value==='custom')$('assistant-provider').value='builtin';
+  $('assistant-provider').hidden=!s.assistant_custom_configured;
+  $('assistant-context-wrap').hidden=!state.selected||$('assistant-provider').value!=='builtin';
+  $('assistant-note').textContent=state.selected?t('assistant.contextNote',{title:state.selected.title||t('note.untitled')}):'';
+  const size=state.assistant.size,sized=!$('assistant-context-wrap').hidden&&$('assistant-context').checked&&size?.uuid===state.selected?.uuid&&typeof size.characters==='number';
+  $('assistant-note-size').hidden=!sized;
+  $('assistant-note-size').textContent=sized?t(size.complete?'assistant.contextSize':'assistant.contextSizeMore',{count:fmt.number(size.characters)}):'';
+}
+// The built-in assistant gets only the note's ID and reports no context use or limit, so show the note's size.
+async function loadNoteSize(){
+  const note=state.selected;
+  if(!note||!$('assistant-context').checked||$('assistant-provider').value!=='builtin'||state.assistant.size?.uuid===note.uuid)return;
+  state.assistant.size={uuid:note.uuid};
+  const result=await run('assistant-note-size',{task_uuid:note.uuid},{poll:false});
+  if(state.assistant.size?.uuid===note.uuid)state.assistant.size={uuid:note.uuid,...(result||{})};
+  paintCompanionControls();
+}
+function presentReply(result){
+  const text=result.text||(result.cancelled?t('assistant.cancelled'):t('assistant.noReply'));
+  const last=state.assistant.messages[state.assistant.messages.length-1];
+  if(last&&last.role==='assistant'&&last.pending){last.pending=false;last.text=text;}else state.assistant.messages.push({role:'assistant',text});
+  state.assistant.route=result.route||result.provider_outcome||'';renderThread();paintAssistantRoute();
+}
+function presentHistory(result){
+  state.assistant.messages=(result.messages||[]).flatMap(row=>[{role:'user',text:row.query},{role:'assistant',text:row.text||t('assistant.pending')}]);
+  state.assistant.route=result.route||'';renderThread();paintAssistantRoute();
+}
+async function sendAssistant(){
+  const input=$('assistant-input'),text=input.value.trim(),provider=$('assistant-provider').value;
+  if(!text){toast(t('assistant.empty'),'error');return;}
+  if(state.assistant.busy)return;
+  const body={text,provider,request_id:crypto.randomUUID()};
+  if(provider==='builtin'&&$('assistant-context').checked&&state.selected)body.task_uuid=state.selected.uuid;
+  state.assistant.busy=true;state.assistant.request=body.request_id;
+  state.assistant.messages.push({role:'user',text},{role:'assistant',pending:true});
+  input.value='';updateAssistantCount();renderThread();paintCompanionControls();
+  const result=await run('assistant',body,{poll:false});
+  state.assistant.busy=false;state.assistant.request=null;state.assistant.finishedAt=Date.now()/1000;
+  if(result)presentReply(result);
+  else{
+    // Keep the request text so nothing typed is lost.
+    const last=state.assistant.messages[state.assistant.messages.length-1];
+    if(last?.pending)state.assistant.messages.pop();
+    if(!input.value)input.value=text;updateAssistantCount();renderThread();
+  }
+  paintCompanionControls();schedulePoll();
+}
+async function cancelAssistant(){
+  const request=state.assistant.request||state.status?.assistant_request_id;
+  if(!request){toast(t('assistant.noActive'),'error');return;}
+  await run('assistant-cancel',{request_id:request},{button:$('assistant-cancel')});
+}
+async function newAssistantConversation(){
+  const result=await run('assistant-new',{}, {button:$('assistant-new')});if(!result)return;
+  state.assistant.messages=[];state.assistant.route='';state.assistant.showConversations=false;paintConversationList();renderThread();paintAssistantRoute();
+}
+function paintConversationList(){
+  const open=state.assistant.showConversations;
+  $('assistant-conversation-list').hidden=!open;$('assistant-thread').hidden=open;
+  $('assistant-conversations').setAttribute('aria-pressed',open?'true':'false');
+}
+async function toggleConversations(){
+  state.assistant.showConversations=!state.assistant.showConversations;paintConversationList();
+  if(state.assistant.showConversations)await loadAssistantConversations();
+}
+function conversationDate(value){
+  const match=/^(\d{4})(\d{2})(\d{2})$/.exec(value||'');
+  return match?new Intl.DateTimeFormat(locale,{dateStyle:'medium'}).format(new Date(Number(match[1]),Number(match[2])-1,Number(match[3]))):value||'';
+}
+async function loadAssistantConversations(){
+  const list=$('assistant-conversation-list');clear(list);list.append(skeleton(5));
+  const result=await run('assistant-conversations',{}, {button:$('assistant-conversations'),poll:false});clear(list);
+  if(!result){list.append(empty('assistant.conversations','assistant.noConversations','history'));return;}
+  state.assistant.route=result.route||'';paintAssistantRoute();
+  const rows=result.conversations||[];
+  if(!rows.length){list.append(empty('assistant.conversations','assistant.noConversations','history'));return;}
+  for(const row of rows){
+    const button=h('button',{class:'conversation',type:'button'},[h('strong',{text:row.title||t('assistant.untitled')}),h('span',{class:'numeric',text:conversationDate(row.date)})]);
+    button.addEventListener('click',()=>selectAssistantConversation(row.handle,button));list.append(button);
+  }
+}
+async function selectAssistantConversation(handle,button){
+  const result=await run('assistant-select-conversation',{handle},{button,poll:false});
+  if(result){state.assistant.showConversations=false;paintConversationList();presentHistory(result);}
+}
+async function loadAssistantHistory(){const result=await run('assistant-history',{}, {button:$('assistant-history'),poll:false});if(result)presentHistory(result);}
+async function recoverAssistant(){const result=await run('assistant-recover',{}, {button:$('assistant-recover')});if(result)presentReply(result);}
+
+// Settings ------------------------------------------------------------------------
+// Each everyday setting appears once, in the group where you would look for it.
+const SETTING_GROUPS=[
+  {id:'recording',title:'settings.group.recording',help:'settings.group.recordingHelp',keys:['enable_incognito_mode','enable_incognito_transcribe','storage_type','enable_record_location','auto_realtime_asr']},
+  {id:'language',title:'settings.group.language',help:'settings.group.languageHelp',keys:['default_source_language']},
+  {id:'summary',title:'settings.group.summary',help:'generation.help',keys:['auto_generate_minutes','auto_generate_minutes_duration','auto_generate_minutes_duration_limit','default_minutes_template']}
+];
+function settingLabel(key){return has('setting.'+key)?t('setting.'+key):key;}
+function choiceLabel(key,value,fallback){const name=`choice.${key}.${value}`;return has(name)?t(name):String(fallback??value);}
+function displaySettingValue(row){
+  if(row.value===null||row.value===undefined)return t('value.notReported');
+  if(row.key==='default_minutes_template'){try{const parsed=JSON.parse(row.value);return parsed.title||parsed.description||row.value;}catch{return row.value;}}
+  return choiceLabel(row.key,row.value,row.choices?.[row.value]||row.value);
+}
+function settingField(row,{choices,value,editor,disabled,groupId}){
+  const select=h('select',{id:editor==='generation'?'generation-'+row.key:'setting-'+row.key,dataset:{key:row.key,editor:editor||'setting',current:String(value??''),group:groupId},disabled});
+  for(const [choice,label] of Object.entries(choices||{}))select.append(h('option',{value:choice,text:choiceLabel(row.key,choice,label)}));
+  if(value!==null&&value!==undefined&&![...select.options].some(option=>option.value===String(value)))select.append(h('option',{value:String(value),text:displaySettingValue(row)}));
+  select.value=String(value??'');
+  select.addEventListener('change',()=>{state.settingsDirty.add(groupId);const save=$('save-'+groupId);if(save)save.disabled=false;});
+  const status=state.status||{};
+  const labelBlock=h('label',{for:select.id},[
+    h('strong',{class:'small',text:settingLabel(row.key)}),
+    h('code',{class:'protocol tiny muted',style:'margin-left:8px',text:row.key})]);
+  const field=h('div',{class:'setting-field'},[labelBlock,select]);
+  if(has('settingHelp.'+row.key))field.append(h('p',{class:'help tiny muted',text:t('settingHelp.'+row.key)}));
+  field.append(h('p',{class:'help tiny muted protocol',text:`${t('meaning.'+row.meaning_evidence)} · ${t('evidence.'+row.evidence)}`}));
+  if((status.persistent_overrides||[]).includes(row.key))field.append(h('div',{class:'help notice warn',text:t('settings.overrideSaved')}));
+  if((status.pending_restores||[]).includes(row.key))field.append(h('div',{class:'help row'},[h('span',{class:'tiny muted',text:t('settings.restoreAvailable')}),h('button',{class:'btn small',type:'button',text:t('action.restore'),onclick:event=>{const button=event.currentTarget;withReadiness(()=>restoreSetting(row.key,button));}})]));
+  return field;
+}
+function paintSettings(force=false){
+  if(!state.status)return;
+  const status=state.status,gen=status.generation_group||{};
+  const fresh=changed('settings',[state.settingsRevision,gen,status.pending_restores,status.persistent_overrides]);
+  if(!force&&(!fresh||state.settingsDirty.size))return;
+  state.settingsDirty.clear();
+  const target=$('settings-list');clear(target);
+  const details=state.catalog.details||[],byKey=Object.fromEntries(details.map(row=>[row.key,row])),used=new Set();
+  if(!details.length){target.append(h('section',{class:'card'},empty('settings.emptyTitle','settings.emptyBody','sliders')));buildNotification();return;}
+  const groups=SETTING_GROUPS.map(group=>({...group,rows:group.keys.map(key=>byKey[key]).filter(row=>row&&row.editable)}));
+  groups.forEach(group=>group.rows.forEach(row=>used.add(row.key)));
+  const others=details.filter(row=>row.editable&&!used.has(row.key)&&row.editor!=='notification');
+  if(others.length)groups.push({id:'other',title:'settings.group.other',help:'settings.group.otherHelp',rows:others});
+  for(const group of groups){
+    if(!group.rows.length)continue;
+    const card=h('section',{class:'card','aria-labelledby':'group-'+group.id},[
+      h('div',{class:'card-head'},h('div',[h('h2',{id:'group-'+group.id,text:t(group.title)}),h('p',{class:'small muted',text:t(group.help)})]))]);
+    for(const row of group.rows){
+      if(row.editor==='generation')card.append(settingField(row,{choices:gen.choices?.[row.key],value:gen.values?.[row.key]??row.value,editor:'generation',disabled:!gen.available,groupId:group.id}));
+      else card.append(settingField(row,{choices:row.choices,value:row.value,editor:'setting',groupId:group.id}));
+    }
+    const actions=h('div',{class:'setting-actions'});
+    if(group.rows.some(row=>row.editor==='generation')){
+      actions.append(h('span',{class:'tiny muted grow',text:gen.persistent_override_saved?t('settings.overrideSaved'):gen.pending_restore?t('settings.restoreAvailable'):gen.available?'':t('generation.unavailable')}));
+      if(gen.pending_restore)actions.append(h('button',{id:'generation-restore',class:'btn small',type:'button',text:t('action.restore'),onclick:event=>{const button=event.currentTarget;withReadiness(()=>restoreGeneration(button));}}));
+    }
+    actions.append(h('button',{id:'save-'+group.id,class:'btn primary small',type:'button',text:t('settings.saveGroup'),disabled:true,onclick:event=>{const button=event.currentTarget;withReadiness(()=>saveGroup(card,group.id,button));}}));
+    card.append(actions);target.append(card);
+  }
+  buildNotification();
+}
+async function saveGroup(card,groupId,button){
+  const gen=state.status?.generation_group||{},byKey=Object.fromEntries((state.catalog.details||[]).map(row=>[row.key,row]));
+  const changes=[],generationValues={};let generationChanged=false;
+  for(const select of card.querySelectorAll('select[data-key]')){
+    if(select.dataset.editor==='generation'){generationValues[select.dataset.key]=select.value;if(select.value!==select.dataset.current)generationChanged=true;}
+    else if(select.value!==select.dataset.current)changes.push({row:byKey[select.dataset.key],value:select.value});
+  }
+  if(!changes.length&&!generationChanged){toast(t('settings.unchanged'));return;}
+  if(generationChanged)for(const key of gen.keys||[])if(!(key in generationValues))generationValues[key]=gen.values?.[key];
+  const override=changes.some(change=>change.row?.requires_persistent_override_confirmation)||(generationChanged&&gen.requires_persistent_override_confirmation);
+  if(override&&!await ask('settings.overrideTitle','settings.overrideText','settings.override'))return;
+  let ok=true;
+  for(const change of changes){
+    const result=await run('setting',{key:change.row.key,value:change.value,persistent_override:Boolean(change.row.requires_persistent_override_confirmation)},{button,poll:false});
+    if(!result){ok=false;break;}
+  }
+  if(ok&&generationChanged)ok=Boolean(await run('generation',{values:generationValues,persistent_override:Boolean(gen.requires_persistent_override_confirmation)},{button,poll:false}));
+  state.settingsDirty.delete(groupId);await poll(true);paintSettings(true);
+  if(ok)toast(t('settings.saved'));
+}
+async function restoreSetting(key,button){
+  const result=await run('restore',{key},{button,success:'settings.restored',poll:'await'});if(result)paintSettings(true);
+}
+async function restoreGeneration(button){
+  if(!await ask('settings.restoreTitle','settings.restoreText','action.restore'))return;
+  const result=await run('restore-generation',{}, {button,success:'settings.restored',poll:'await'});if(result)paintSettings(true);
+}
+function buildNotification(){
+  const group=state.status?.notification_group||{},method=$('notification-method'),current=method.value;clear(method);
+  for(const [value,label] of Object.entries(group.method_choices||{}))method.append(h('option',{value,text:choiceLabel('agent_result_notify_type',value,label)}));
+  method.value=current&&[...method.options].some(option=>option.value===current)?current:group.method;
+  $('notification-current').textContent=serverText(group.current_organization_label||t('value.notReported'));
+  const select=$('notification-org'),selected=select.value;clear(select);
+  for(const option of group.organization_options||[])select.append(h('option',{value:option.handle,text:option.label}));
+  if(group.current_organization_handle)select.value=group.current_organization_handle;else if(selected)select.value=selected;
+  select.disabled=!select.options.length;
+  $('notification-save').disabled=!group.available;$('notification-restore').hidden=!group.pending_restore;
+}
+async function loadOrganizations(){
+  const result=await run('notification-options',{}, {button:$('notification-load-orgs')});
+  if(result){state.status.notification_group=result;state.quotaOrganizations=result.organization_options||[];buildNotification();buildQuotaOrganizations();}
+}
+async function saveNotification(){
+  const group=state.status?.notification_group||{},body={method:$('notification-method').value};
+  if(group.organizations_loaded&&$('notification-org').value)body.organization_handle=$('notification-org').value;
+  const override=group.method_requires_override||(body.organization_handle&&group.organization_requires_override);
+  if(override&&!await ask('settings.overrideTitle','settings.overrideText','settings.override'))return;
+  body.persistent_override=Boolean(override);
+  const result=await run('notification',body,{button:$('notification-save'),success:'settings.saved',poll:'await'});if(result)buildNotification();
+}
+async function restoreNotification(){const result=await run('restore-notification',{}, {button:$('notification-restore'),success:'settings.restored',poll:'await'});if(result)buildNotification();}
+function renderDevice(result){
+  state.device=result;const target=$('device-identity-view');clear(target);
+  target.append(facts([[t('identity.name'),result.name],[t('identity.sn'),result.sn],[t('identity.firmware'),result.firmware_version],[t('identity.readAt'),fmt.time(result.read_at)],[t('identity.stale'),result.stale?t('value.yes'):t('value.no')],[t('identity.pending'),result.pending?t('value.yes'):t('value.no')]]));
+  $('device-rename').value=result.name||'';$('device-restore-name').hidden=!result.restore_available;
+}
+async function loadDevice(refresh=false){
+  const result=refresh?await run('device-name',{}, {button:$('device-refresh'),poll:false}):await run('device-identity',{}, {button:$('device-load'),poll:false});
+  if(result)renderDevice(result);
+}
+async function saveDeviceName(restore=false){
+  if(!state.device){toast(t('identity.loadFirst'),'error');return;}
+  const name=$('device-rename').value;
+  if(!await ask(restore?'identity.restoreConfirmTitle':'identity.renameConfirmTitle',restore?'identity.restoreConfirmText':'identity.renameConfirmText',restore?'action.restore':'identity.rename',false,{title:name}))return;
+  const result=restore
+    ?await run('device-name-restore',{expected_revision:state.device.revision},{button:$('device-restore-name'),success:'identity.restored',poll:false})
+    :await run('device-name-save',{name,expected_revision:state.device.revision},{button:$('device-save-name'),success:'identity.renamed',poll:false});
+  if(result)renderDevice(result);
+}
+function quotaNumber(value,unit){
+  if(value===null||value===undefined)return t('quota.notReported');
+  value=Number(value);if(!Number.isFinite(value))return t('quota.notReported');
+  if(unit==='KB'){if(value>=1048576){value/=1048576;unit='GB';}else if(value>=1024){value/=1024;unit='MB';}}
+  if(value>0&&value<0.001)return t('quota.lessThan',{value:quotaNumber(0.001,unit)});
+  const countKey={minutes:'quota.minuteCount','篇':'quota.summaryCount','次':'quota.questionCount'}[unit];
+  return countKey?t(countKey,{n:fmt.number(value)},value):fmt.number(value)+(unit?' '+unit:'');
+}
+function quotaTable(headers,rows){
+  const table=h('table'),head=h('tr');headers.forEach((label,index)=>head.append(h('th',{class:index?'num':null,text:label})));table.append(h('thead',{},head));
+  const body=h('tbody');
+  for(const row of rows){const tr=h('tr');row.forEach((value,index)=>tr.append(h('td',{class:index?'num':null,text:value===null||value===undefined||value===''?t('value.notReported'):String(value)})));body.append(tr);}
+  table.append(body);return h('div',{class:'table-wrap'},table);
+}
+function quotaBoards(boards){
+  const target=h('div',{class:'stack'});
+  if(!boards?.length){target.append(h('p',{class:'small muted',text:t('quotas.emptyBody')}));return target;}
+  for(const board of boards){
+    const block=h('div',{class:'stack tight'},[h('div',{class:'row between'},[h('strong',{text:board.title||t('quotas.board')}),badge(t('quota.membership.'+(board.membership||'unknown')))]),h('p',{class:'small muted',text:board.description||t('value.notReported')})]);
+    const usages=board.usages||[];
+    if(usages.length)block.append(quotaTable([t('quotas.allowance'),t('quotas.used'),t('quotas.remaining'),t('quotas.total')],usages.map(row=>[row.label,quotaNumber(row.used,row.unit),quotaNumber(row.remaining,row.unit),quotaNumber(row.total,row.unit)])));
+    const benefits=board.benefits||[];
+    if(benefits.length)block.append(quotaTable([t('quotas.benefit'),t('quotas.vendorValue')],benefits.map(row=>[t('quota.category.'+row.category),row.display])));
+    target.append(block);
+  }
+  return target;
+}
+const kb=value=>quotaNumber(value,'KB');
+function renderQuotas(result){
+  const target=$('quotas-output');clear(target);
+  target.append(h('p',{class:'tiny muted',text:`${t('quotas.queried',{time:fmt.time(result.queried_at)})} · ${t('quota.selectedOrganization',{name:result.organization_label||t('quota.personalDefault')})}`}));
+  for(const name of ['account','device','detail','traffic']){
+    const section=result.sections?.[name],panel=h('section',{class:'stack tight'},[h('h3',{text:t('quota.section.'+name)})]);
+    if(!section?.available)panel.append(h('div',{class:'notice warn',text:t('quotas.unavailable')}));
+    else if(name==='account'||name==='device')panel.append(quotaBoards(section.data?.boards));
+    else if(name==='detail'){
+      const rows=section.data?.items||[];
+      panel.append(rows.length?quotaTable([t('quotas.allowance'),t('quotas.used'),t('quotas.remaining'),t('quotas.total'),t('quotas.expires')],rows.map(row=>[row.name,quotaNumber(row.used,row.unit),quotaNumber(row.remaining,row.unit),quotaNumber(row.total,row.unit),row.expires])):h('p',{class:'small muted',text:t('quotas.emptyBody')}));
+    }else{
+      const data=section.data||{};
+      panel.append(facts([[t('quotas.used'),kb(data.used)],[t('quotas.remaining'),kb(data.remaining)],[t('quotas.total'),kb(data.total)]]));
+      if(data.tip)panel.append(h('p',{class:'small muted',text:data.tip}));
+      if(data.daily?.length)panel.append(quotaTable([t('quotas.date'),t('quotas.used')],data.daily.map(row=>[row.date,kb(row.used)])));
+    }
+    target.append(panel);
+  }
+}
+function buildQuotaOrganizations(){
+  const select=$('quota-org'),current=select.value;clear(select);
+  select.append(h('option',{value:'',text:t('quota.personalDefault')}));
+  for(const row of state.quotaOrganizations||[])if(!row.personal)select.append(h('option',{value:row.handle,text:row.label}));
+  select.value=[...select.options].some(option=>option.value===current)?current:'';
+}
+async function loadQuotaOrganizations(){
+  const result=await run('notification-options',{}, {button:$('quota-orgs')});
+  if(result){state.status.notification_group=result;state.quotaOrganizations=result.organization_options||[];buildNotification();buildQuotaOrganizations();}
+}
+async function loadQuotas(){
+  const handle=$('quota-org').value,body=handle?{organization_handle:handle}:{};
+  const target=$('quotas-output');clear(target);target.append(skeleton(4));
+  const result=await run('quotas',body,{button:$('quotas-load'),poll:false});
+  if(result)renderQuotas(result);else clear(target);
+}
+
+// Dev tools -----------------------------------------------------------------------
+function setProtocol(on){
+  state.protocol=on;prefs.set('protocol',on?'1':'0');document.body.classList.toggle('show-protocol',on);$('protocol-keys').checked=on;
+  state.signatures={};paintStatus();paintAssistantRoute();if(state.view==='settings')paintSettings(true);
+}
+function paintDev(force=false){
+  if(state.view!=='dev'&&!force)return;
+  const s=state.status;if(!s)return;
+  if(changed('timings',s.action_timings||{})){
+    const target=$('timing-list');clear(target);
+    const rows=Object.entries(s.action_timings||{}).sort((a,b)=>b[1].total_ms-a[1].total_ms);
+    if(!rows.length)target.append(h('p',{class:'small muted',text:t('dev.timingsEmpty')}));
+    else target.append(quotaTable([t('dev.timing.action'),t('dev.timing.calls'),t('dev.timing.failures'),t('dev.timing.average'),t('dev.timing.last'),t('dev.timing.slowest')],
+      rows.map(([action,row])=>[action,fmt.number(row.count),fmt.number(row.failures),`${fmt.number(Math.round(row.total_ms/Math.max(1,row.count)))} ms`,`${fmt.number(row.last_ms)} ms`,`${fmt.number(row.max_ms)} ms`])));
+  }
+  if(changed('credentials',s.credentials)){
+    const target=$('credential-list');clear(target);const items=s.credentials?.items||[];
+    if(!items.length)target.append(h('p',{class:'small muted',text:t('credentials.emptyBody')}));
+    for(const item of items){
+      const name=item.state||'unknown',kind=['valid','configured','renewable','renews_on_use'].includes(name)?'ok':['missing','not_configured','not_authorized','absent'].includes(name)?'':'warn';
+      target.append(h('div',{class:'row-item'},[h('div',{class:'grow stack tight'},[h('strong',{text:t('credential.'+item.id)}),h('span',{class:'tiny muted',text:`${t('credentials.expires')}: ${item.expires_at?fmt.time(item.expires_at):t('value.unknown')}`}),item.protected===false?h('span',{class:'tiny',text:t('credentials.unprotected')}):null]),badge(t('credential.state.'+name),kind)]));
+    }
+  }
+  if(changed('rtc',[s.rtc,armed(),s.own_test])){
+    const rtc=s.rtc||{},ready=armed();
+    $('rtc-begin').hidden=Boolean(rtc.active||rtc.stopping||rtc.cleanup_pending);$('rtc-begin').disabled=!ready||Boolean(s.own_test);
+    $('rtc-end').hidden=!rtc.active&&!rtc.stopping&&!rtc.cleanup_pending;$('rtc-end').disabled=!rtc.active&&!rtc.stopping;
+    $('rtc-badge').textContent=rtc.active?t('rtc.active'):rtc.cleanup_pending?t('rtc.pending'):t('rtc.inactive');
+    $('rtc-badge').className=`badge ${rtc.active?'ok':rtc.cleanup_pending?'warn':''}`.trim();
+    $('rtc-state').textContent=rtc.stopping?t('rtc.stopping'):rtc.error_type?t('rtc.error',{type:rtc.error_type}):t('rtc.limit');
+    const result=rtc.last_result,target=$('rtc-result');clear(target);
+    if(result)target.append(facts([[t('rtc.resultSeconds'),result.seconds_requested],[t('rtc.frames'),fmt.number(result.audio_frames_received||0)],[t('rtc.audioSeconds'),result.audio_seconds_received??t('value.notReported')],[t('rtc.liveRows'),fmt.number(result.live_asr_candidates||0)],[t('rtc.physical'),result.physical_effects_verified?t('value.yes'):t('task.notPhysical')]]));
+  }
+  if(changed('cache',[s.cache])){
+    const data=s.cache||{},target=$('cache-view');clear(target);
+    target.append(facts([[t('cache.entries'),fmt.number(data.entries||0)],[t('cache.oldest'),data.oldest_at?fmt.ago(data.oldest_at):t('value.notReported')]]));
+    $('cache-clear').disabled=!data.entries;
+  }
+  if(changed('task',s.record_task)){
+    const data=s.record_task||{},target=$('task-view');clear(target);
+    target.append(facts([[t('task.available'),data.available?t('value.yes'):t('value.no')],[t('task.source'),data.source||t('value.notReported')],[t('task.observed'),fmt.time(data.observed_at)],[t('task.cloudState'),data.state??t('value.notReported')],[t('task.asr'),data.real_time_asr===null||data.real_time_asr===undefined?t('value.unknown'):data.real_time_asr?t('value.yes'):t('value.no')]]),h('p',{class:'tiny muted',style:'margin-top:8px',text:t('task.notPhysical')}));
+    $('task-refresh').disabled=!data.available||Boolean(data.read_in_progress);
+  }
+  if(changed('capture',s.live_diagnostics)){
+    const data=s.live_diagnostics||{},target=$('capture-view');clear(target);
+    target.append(h('div',{class:'row'},[badge(data.active?t('capture.active'):t('capture.inactive'),data.active?'ok':''),data.capture_id?h('span',{class:'protocol mono',text:data.capture_id}):null]));
+    target.append(facts([[t('capture.elapsed'),data.elapsed_seconds??0],[t('capture.rows'),fmt.number(data.rows_written||0)],[t('capture.bytes'),fmt.bytes(data.bytes_written||0)],[t('capture.pushes'),fmt.number(data.push_frames||0)],[t('capture.candidates'),fmt.number(data.transcript_candidates||0)],[t('capture.dropped'),fmt.number(data.queue_dropped||0)],[t('capture.decoderErrors'),fmt.number(data.decoder_errors||0)]]));
+    if(data.finish_reason)target.append(h('p',{class:'tiny muted',text:t('capture.finish.'+data.finish_reason)}));
+    $('capture-start').disabled=Boolean(data.active);$('capture-stop').disabled=!data.active;
+  }
+  if(changed('raw-settings',[state.settingsRevision])){
+    const target=$('settings-raw');clear(target);const details=state.catalog.details||[];
+    const table=h('table'),head=h('tr');
+    [t('dev.raw.setting'),t('dev.raw.key'),t('dev.raw.value'),t('dev.raw.editable'),t('dev.raw.evidence')].forEach((label,index)=>head.append(h('th',{class:index===1?'protocol':null,text:label})));
+    table.append(h('thead',{},head));const body=h('tbody');
+    for(const row of details)body.append(h('tr',{},[h('td',{text:settingLabel(row.key)}),h('td',{class:'protocol mono',text:row.key}),h('td',{class:'wrap',text:displaySettingValue(row)}),h('td',{text:row.editable?t('value.yes'):t('value.no')}),h('td',{class:'tiny muted',text:`${t('meaning.'+row.meaning_evidence)} · ${t('evidence.'+row.evidence)}`})]));
+    table.append(body);target.append(table);
+  }
+  if(changed('events',[state.events.length?state.events[state.events.length-1].id:0])){
+    const target=$('event-list');clear(target);const rows=state.events.slice(-40).reverse();
+    if(!rows.length)target.append(h('p',{class:'small muted',text:t('events.emptyBody')}));
+    for(const event of rows)target.append(h('div',{class:'row-item'},h('div',{class:'grow stack tight'},[h('div',{class:'row between'},[h('strong',{class:'small',text:t('kind.'+event.kind)}),h('span',{class:'tiny muted numeric',text:fmt.time(event.time)})]),h('span',{class:'protocol mono wrap',text:JSON.stringify(event.data)})])));
+  }
+}
+const MCP_TOOLS=['list_my_minutes','list_minutes_tags','list_minutes_by_tag','get_minutes_basic_info','batch_get_minutes_details','get_minutes_transcription','get_minutes_ai_summary','get_minutes_keywords','list_minutes_todos','get_minutes_media_url','list_hot_words','list_audio_memos','list_custom_templates','list_system_templates'];
+function buildMcpTools(){const select=$('mcp-tool'),current=select.value;clear(select);MCP_TOOLS.forEach(tool=>select.append(h('option',{value:tool,text:t('tool.'+tool)})));if(current)select.value=current;}
+async function runMcpTool(){
+  let args;try{args=JSON.parse($('mcp-args').value);}catch{toast(t('mcp.badArguments'),'error');return;}
+  if(!args||typeof args!=='object'||Array.isArray(args)){toast(t('mcp.badArguments'),'error');return;}
+  const raw=await run('documents',{tool:$('mcp-tool').value,arguments:args},{button:$('mcp-run'),poll:false});if(!raw)return;
+  const output=$('mcp-result');output.hidden=false;
+  try{output.textContent=JSON.stringify(documentData(raw),null,2);}catch(error){output.textContent=errorText(error);}
+}
+function startRtc(){
+  const seconds=Number($('rtc-seconds').value);
+  if(!Number.isInteger(seconds)||seconds<1||seconds>45){toast(t('rtc.badSeconds'),'error');return;}
+  run('rtc-start',{seconds,receive_audio:$('rtc-audio').checked},{button:$('rtc-begin'),success:'rtc.started'});
+}
+async function loadRtcOptions(){
+  const result=await run('rtc-options',{scene:$('rtc-scene').value},{button:$('rtc-load-options'),poll:false});if(!result)return;
+  const target=$('rtc-options');clear(target);const languages=result.languages||[];
+  if(!languages.length){target.append(h('p',{class:'small muted',text:t('rtc.noOptionsBody')}));return;}
+  for(const language of languages){
+    const voices=(language.voices||[]).map(voice=>voice.label).join(', ')||t('rtc.noVoices');
+    target.append(h('div',{class:'row-item'},h('div',{class:'grow stack tight'},[h('div',{class:'row between'},[h('strong',{text:language.native_label||language.label}),badge(language.language)]),h('span',{class:'tiny muted',text:voices})])));
+  }
+}
+function startCapture(){
+  const seconds=Number($('capture-seconds').value);
+  if(!Number.isInteger(seconds)||seconds<1||seconds>300){toast(t('capture.badSeconds'),'error');return;}
+  run('capture-start',{seconds},{button:$('capture-start')});
+}
+
+// Startup -------------------------------------------------------------------------
+function applyTheme(value){if(value==='system')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=value;$('theme-select').value=value;}
+function refreshLocalized(){
+  applyStatic();state.signatures={};
+  paintStatus();renderNotesList();renderSelectedNote();renderSavedTranscript();paintSummary();renderThread();
+  buildMcpTools();buildQuotaOrganizations();updateAssistantCount();if(state.view==='settings')paintSettings(true);
+}
+function bind(id,event,handler){$(id).addEventListener(event,handler);}
+function initialize(){
+  applyTheme(prefs.get('theme','system'));document.body.classList.toggle('show-protocol',state.protocol);$('protocol-keys').checked=state.protocol;
+  applyStatic();buildMcpTools();updateAssistantCount();renderThread();renderNotesList();paintSummary();
+  document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
+  document.querySelectorAll('[data-note-tab]').forEach(button=>button.addEventListener('click',()=>showNoteTab(button.dataset.noteTab)));
+  bind('locale-select','change',event=>{locale=event.target.value;prefs.set('locale',locale);refreshLocalized();});
+  bind('theme-select','change',event=>{prefs.set('theme',event.target.value);applyTheme(event.target.value);});
+  bind('protocol-keys','change',event=>setProtocol(event.target.checked));
+  bind('global-search','input',event=>{setFilter(event.target.value);if(state.view!=='notes')showView('notes');});
+  bind('notes-search','input',event=>setFilter(event.target.value));bind('notes-search','keydown',searchNotes);
+  bind('notes-source','change',changeNoteSource);bind('notes-source','focus',()=>{if(!state.tabsLoaded){state.tabsLoaded=true;loadNoteSources();}});
+  bind('note-markers','click',()=>showNoteMarkers());bind('device-info-load','click',loadDeviceInfo);
+  bind('recordings-groups','click',loadGroups);bind('recordings-source','change',()=>fresh(loadRecordings,false));
+  bind('companion-toggle','click',toggleCompanion);bind('companion-close','click',closeCompanion);
+  bind('companion-expand','click',()=>{state.companionOpen=false;showView('assistant');});
+  bind('connection-chip','click',()=>showView('dev'));
+  bind('topbar-reconnect','click',()=>run('reconnect',{}, {button:$('topbar-reconnect'),success:'dev.reconnectSent'}));
+  bind('dev-reconnect','click',()=>run('reconnect',{}, {button:$('dev-reconnect'),success:'dev.reconnectSent'}));
+  bind('dev-refresh','click',()=>run('refresh',{}, {button:$('dev-refresh'),success:'state.refreshed'}));
+  bind('home-open-notes','click',()=>showView('notes'));
+  bind('live-filter','change',paintLive);
+  // Recorder
+  bind('arm-button','click',()=>openReadiness());
+  bind('device-check','click',()=>run('device-check',{}, {button:$('device-check'),poll:'await'}));
+  bind('disarm-button','click',()=>run('disarm',{}, {button:$('disarm-button'),poll:'await'}));
+  bind('record-live','change',event=>prefs.set('recordLive',event.target.checked?'1':'0'));
+  bind('record-start','click',()=>recordAction('start'));bind('record-pause','click',()=>recordAction('pause'));
+  bind('record-resume','click',()=>recordAction('resume'));bind('record-stop','click',()=>recordAction('stop'));
+  bind('record-confirm','click',async()=>{if(await ask('recording.confirmTitle','recording.confirmText','recording.confirm'))await run('confirm-stopped',{physically_stopped:true},{button:$('record-confirm'),success:'recording.confirmed',poll:'await'});});
+  // Notes
+  bind('notes-reload','click',()=>fresh(loadNotes,false));bind('note-reload','click',reloadNote);bind('notes-more','click',()=>loadNotes(true));
+  bind('note-back','click',()=>$('notes-layout').classList.remove('reading'));
+  bind('note-favorite','click',toggleFavorite);bind('note-ask','click',()=>{$('assistant-context').checked=true;paintCompanionControls();openCompanion();loadNoteSize();});
+  bind('assistant-context','change',()=>{paintCompanionControls();loadNoteSize();});
+  bind('note-export-transcript','click',()=>downloadNote('transcript',$('note-export-transcript'),null,false,$('transcript-export-format').value));
+  bind('note-export-summary','click',()=>downloadNote('summary',$('note-export-summary'),null,false,$('summary-export-format').value));
+  bind('note-media-download','click',downloadMedia);
+  bind('note-add-draft','click',()=>addDraft(state.summaryText));
+  bind('summary-load','click',()=>fresh(loadSummary));bind('summary-edit','click',()=>setSummaryEditing(true));
+  bind('summary-cancel','click',()=>setSummaryEditing(false));bind('summary-save','click',saveSummary);bind('summary-regenerate','click',regenerateSummary);
+  bind('transcript-source','change',()=>loadTranscript(false));bind('transcript-load','click',()=>fresh(loadTranscript,false));bind('transcript-more','click',()=>loadTranscript(true));
+  bind('transcript-draft','click',()=>addDraft(state.transcriptRows.map(row=>row.content||row.text).filter(Boolean).join('\n\n')));
+  bind('translate-load-options','click',loadThenReload('translate-load-options',loadTranslateOptions));bind('translate-run','click',()=>runTranslation(false));bind('translate-more','click',()=>runTranslation(true));
+  bind('translate-export','click',()=>downloadNote('transcript',$('translate-export'),$('translate-target').value,false,$('translate-export-format').value));
+  bind('translate-export-bilingual','click',()=>downloadNote('transcript',$('translate-export-bilingual'),$('translate-target').value,true,$('translate-export-format').value));
+  bind('tags-load','click',()=>fresh(loadTags));bind('tags-save','click',saveTags);bind('tag-create','click',createTag);
+  bind('tag-definition','change',updateTagDefinition);bind('tag-rename','click',renameTag);bind('tag-delete','click',deleteTag);
+  bind('replace-find','input',()=>{state.replacement=null;});bind('replace-with','input',()=>{state.replacement=null;});
+  bind('account-load','click',loadThenReload('account-load',loadAccountSettings));
+  // The backend registers a console client for this page's own address once, so the approval
+  // tab returns here by itself. Pasting the final address stays as a fallback.
+  bind('mcp-grant-write','click',event=>startMcpLogin('write','console',event.currentTarget));
+  bind('mcp-renew-read','click',event=>startMcpLogin('read','console',event.currentTarget));
+  bind('mcp-finish','click',finishMcpLogin);
+  bind('recordings-load','click',()=>fresh(loadRecordings,false));bind('recordings-more','click',()=>loadRecordings(true));
+  bind('danger-switch','change',toggleDanger);bind('ble-pairing','click',downloadBlePairing);bind('device-unbind','click',unbindDevice);bind('note-delete','click',deleteNote);
+  bind('share-access','change',paintSharePassword);bind('share-password-clear','click',clearSharePassword);
+  bind('note-rename','click',()=>editTitle(true));bind('note-title-cancel','click',()=>editTitle(false));
+  $('note-title-form').addEventListener('submit',event=>{event.preventDefault();saveTitle();});
+  bind('speaker-save','click',renameSpeaker);bind('hotwords-load','click',loadThenReload('hotwords-load',loadHotWords));bind('hotwords-add','click',addHotWords);
+  bind('note-path','change',event=>{prefs.set('notePath',event.target.value);paintMcpControls();});
+  bind('replace-preview','click',previewReplacement);bind('replace-save','click',saveReplacement);
+  bind('share-refresh','click',()=>fresh(loadShare));bind('share-save','click',saveShare);bind('share-copy','click',copyShare);
+  bind('extras-keywords','click',event=>readNoteExtra('get_minutes_keywords',event.currentTarget));
+  bind('extras-todos','click',event=>readNoteExtra('list_minutes_todos',event.currentTarget));
+  bind('extras-info','click',event=>readNoteExtra('get_minutes_basic_info',event.currentTarget));
+  bind('summary-mcp','click',readMcpSummary);
+  document.addEventListener('click',event=>{const menu=$('export-menu');if(menu.open&&!menu.contains(event.target))menu.open=false;});
+  // Memos and assistant
+  bind('memos-load','click',()=>fresh(loadMemos));
+  bind('assistant-input','input',updateAssistantCount);
+  bind('assistant-input','keydown',event=>{if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)){event.preventDefault();sendAssistant();}});
+  bind('assistant-form','submit',event=>{event.preventDefault();sendAssistant();});
+  bind('assistant-provider','change',paintCompanionControls);bind('assistant-cancel','click',cancelAssistant);
+  bind('assistant-new','click',newAssistantConversation);bind('assistant-conversations','click',toggleConversations);
+  bind('assistant-history','click',loadAssistantHistory);bind('assistant-recover','click',recoverAssistant);
+  // Settings
+  bind('settings-refresh','click',async()=>{const result=await run('refresh',{}, {button:$('settings-refresh'),success:'state.refreshed',poll:'await'});if(result)paintSettings(true);});
+  bind('notification-load-orgs','click',loadOrganizations);bind('notification-save','click',()=>withReadiness(saveNotification));bind('notification-restore','click',()=>withReadiness(restoreNotification));
+  bind('device-load','click',()=>loadDevice(false));bind('device-refresh','click',()=>loadDevice(true));
+  bind('device-save-name','click',()=>withReadiness(()=>saveDeviceName(false)));bind('device-restore-name','click',()=>withReadiness(()=>saveDeviceName(true)));
+  bind('quotas-load','click',loadThenReload('quotas-load',loadQuotas));bind('quota-orgs','click',loadQuotaOrganizations);
+  // Dev
+  bind('task-refresh','click',()=>run('record-task',{}, {button:$('task-refresh')}));
+  bind('cache-clear','click',async()=>{if(await ask('cache.clearTitle','cache.clearText','cache.clear'))await run('cache-clear',{}, {button:$('cache-clear'),success:'cache.cleared',poll:'await'});});
+  bind('capture-start','click',startCapture);bind('capture-stop','click',()=>run('capture-stop',{}, {button:$('capture-stop')}));
+  bind('mcp-run','click',runMcpTool);bind('rtc-load-options','click',loadThenReload('rtc-load-options',loadRtcOptions));
+  bind('rtc-begin','click',startRtc);bind('rtc-end','click',()=>run('rtc-stop',{}, {button:$('rtc-end')}));
+  // Dialogs and keys
+  $('confirm-ok').addEventListener('click',()=>settleConfirm(true));$('confirm-cancel').addEventListener('click',()=>settleConfirm(false));
+  $('confirm-dialog').addEventListener('cancel',event=>{event.preventDefault();settleConfirm(false);});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&state.companionOpen&&!document.querySelector('dialog[open]'))closeCompanion();});
+  window.addEventListener('hashchange',()=>showView(viewFromHash()));
+  showView(viewFromHash());
+  poll();setInterval(()=>poll(),2000);setInterval(paintRecording,1000);
+}
+initialize();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Credentials and local state (see docs/credentials.md)
+.private*/
+.env
+
+# Build output (tools/build_demo.py)
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local deploy cache (Cloudflare wrangler)
+.wrangler/
