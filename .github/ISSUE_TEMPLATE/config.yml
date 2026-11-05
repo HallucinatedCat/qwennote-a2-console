@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/HallucinatedCat/qwennote-a2-console/security/advisories/new
+    about: Report privately. Never open a public issue for a security problem.
+  - name: Questions about the A2, the QwenNote app or your account
+    url: https://docs.qwennote.cn/zh/a2
+    about: This project is unofficial and cannot help with the device, the vendor app or vendor accounts.
+  - name: Is it supported?
+    url: https://github.com/HallucinatedCat/qwennote-a2-console/blob/main/docs/capabilities.md
+    about: Check the capability list before opening an issue. "Not supported" items are closed without discussion.

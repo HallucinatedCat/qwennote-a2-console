@@ -1,0 +1,96 @@
+name: Bug report
+description: Something listed as working in docs/capabilities.md does not work.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bug reports only. Incomplete reports, reports about functions marked **Not supported**, and anything containing credentials or personal data are closed without reply.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched open and closed issues and this is not a duplicate.
+          required: true
+        - label: The function is marked ✅ Working or 🔎 Needs a check in docs/capabilities.md.
+          required: true
+        - label: I am using my own account and my own A2, on the latest commit of main.
+          required: true
+        - label: This report contains no tokens, session files, account or device IDs, serial numbers, phone numbers, note text, audio or signed links.
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Console backend or web UI (artifacts/standalone-session)
+        - MCP reader (artifacts/mcp-reader)
+        - Live demo or tools/ui_preview.py
+        - Documentation
+    validations:
+      required: true
+
+  - type: input
+    id: function
+    attributes:
+      label: Function
+      description: The row from docs/capabilities.md, word for word.
+      placeholder: "Find and replace in the transcript"
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD`.
+      placeholder: "71cd517"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, browser.
+      placeholder: "Debian 13, Python 3.12, Firefox 140"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from opening the console. If it reproduces in the live demo or ui_preview.py, say which scenario.
+      placeholder: |
+        1. Notes → open a note
+        2. Organize → Find and replace
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: The exact message the console shows. Paste text, not a screenshot of text.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional, redacted)
+      description: Request timings or the health check from Dev tools. Remove every identifier first.
+      render: text

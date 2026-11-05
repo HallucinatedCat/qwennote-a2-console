@@ -1,0 +1,54 @@
+name: Feature request
+description: Propose one function the official QwenNote app already offers for a 4G A2.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Scope is narrow on purpose. Requests are closed without discussion if they:
+        - are listed under **Not supported** in docs/capabilities.md;
+        - need firmware changes, reset, a device you do not own, or another account;
+        - would bypass a vendor limit, quota, payment or access check;
+        - ask for credentials, keys or extraction tools.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched open and closed issues and this is not a duplicate.
+          required: true
+        - label: The official QwenNote app offers this for a 4G A2 today.
+          required: true
+        - label: It is not listed under "Not supported" in docs/capabilities.md.
+          required: true
+        - label: It does not bypass any vendor limit, quota, payment or access check.
+          required: true
+
+  - type: input
+    id: app_path
+    attributes:
+      label: Where it is in the official app
+      description: The menu path in the QwenNote app.
+      placeholder: "Note → ⋯ → Export → Word"
+    validations:
+      required: true
+
+  - type: textarea
+    id: use
+    attributes:
+      label: What you want to do
+      description: One function, in one or two sentences.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Will you open the pull request?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true

@@ -1,0 +1,40 @@
+name: PR template
+
+# Reads only the pull request's text; never checks out or runs its code,
+# so pull_request_target is safe here and can comment on pull requests from forks.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.user.login === context.repo.owner) return;  // the maintainer's own pull requests
+            const body = (pr.body || '').replace(/<!--[\s\S]*?-->/g, '');
+            const problems = [];
+            if (!/\b(close[sd]?|fix(e[sd])?|resolve[sd]?) #\d+/i.test(body)) problems.push('Link the issue it closes: `Closes #123`.');
+            for (const heading of ['## Issue', '## Change', '## Tests', '## Checklist'])
+              if (!body.includes(heading)) problems.push(`Keep the template section "${heading}".`);
+            const boxes = body.match(/^\s*- \[[ xX]\]/gm) || [];
+            if (boxes.length < 9) problems.push('Keep all 9 checklist items.');
+            if (/^\s*- \[ \]/m.test(body)) problems.push('Tick every checklist item; all of them apply to every pull request.');
+            if (!/Ran \d+ tests?/.test(body)) problems.push('Paste the test output ("Ran N tests ... OK") under Tests.');
+            const marker = '<!-- pr-template-check -->';
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: pr.number, per_page: 100 });
+            const previous = comments.find(c => c.body.includes(marker));
+            if (problems.length) {
+              const text = `${marker}\nThis pull request does not follow the template yet:\n\n${problems.map(p => '- ' + p).join('\n')}\n\nEdit the description; this check runs again on every edit. Pull requests that stay incomplete are closed.`;
+              if (previous) await github.rest.issues.updateComment({ ...context.repo, comment_id: previous.id, body: text });
+              else await github.rest.issues.createComment({ ...context.repo, issue_number: pr.number, body: text });
+              core.setFailed(problems.join(' '));
+            } else if (previous) {
+              await github.rest.issues.deleteComment({ ...context.repo, comment_id: previous.id });
+            }

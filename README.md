@@ -137,6 +137,10 @@ Tests use invented data and local loopback servers only; they never contact the 
 
 </details>
 
+## Contributing
+
+Scope is deliberately narrow. Open an issue through the [bug or feature form](https://github.com/HallucinatedCat/qwennote-a2-console/issues/new/choose) first; pull requests must close an accepted issue and follow the template. Read [CONTRIBUTING.md](CONTRIBUTING.md) before you start.
+
 ## License
 
 [GNU General Public License v3.0](LICENSE).
